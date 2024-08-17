@@ -3,7 +3,9 @@ include:
   file:
     - Pytest.gitlab-ci.yml
     - Python-Lint.gitlab-ci.yml
+    - MkDocs.gitlab-ci.yml
 
 stages:
   - lint
   - test
+  - deploy
