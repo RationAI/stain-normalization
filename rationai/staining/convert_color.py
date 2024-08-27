@@ -1,3 +1,4 @@
+from collections.abc import Sequence
 from enum import Enum, auto, unique
 from typing import overload
 
@@ -96,11 +97,14 @@ def convert_color(
 
 
 @overload
-def convert_color(tile: StainArray, conversion: ColorConversion) -> RGBArray: ...
+def convert_color(
+    tile: StainArray | Sequence[StainArray], conversion: ColorConversion
+) -> RGBArray: ...
 
 
 def convert_color(
-    tile: RGBArray | StainArray | Image, conversion: ColorConversion
+    tile: RGBArray | Image | StainArray | Sequence[StainArray],
+    conversion: ColorConversion,
 ) -> RGBArray | tuple[StainArray, ...]:
     """Converts a tile into the specified color space.
 
@@ -131,5 +135,7 @@ def convert_color(
             return tuple(np.moveaxis(separate_stains(tile, conversion.matrix), -1, 0))
 
         case ConversionType.STAIN2RGB:
+            if isinstance(tile, Sequence):
+                tile = np.stack(tile, axis=-1)
             tile = np.asarray(tile, dtype=np.float64)
             return (255 * combine_stains(tile, conversion.matrix)).astype(np.uint8)
