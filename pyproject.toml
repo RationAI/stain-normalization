@@ -6,15 +6,12 @@ authors = [{ name = "Tomáš Balák" }]
 requires-python = ">=3.11"
 readme = "README.md"
 license = { file = "LICENSE" }
-dependencies = [
-    "numpy>=1.26.4",
-    "pillow>=10.3.0",
-    "scikit-image>=0.23.2",
-]
+dependencies = ["numpy>=1.26.4", "pillow>=10.3.0", "scikit-image>=0.23.2"]
 
 [tool.pdm.dev-dependencies]
 dev = ["mypy", "pre-commit", "ruff"]
 test = ["pytest", "pytest-cov", "perlin-noise>=1.12"]
+docs = ["mkdocs-material>=9.5.32", "mkdocstrings[python]>=0.25.2"]
 
 [tool.pdm.scripts]
 l = { composite = ["lint", "format", "mypy"] }
@@ -22,6 +19,7 @@ test = "pytest tests"
 lint = "ruff check --fix"
 format = "ruff format"
 mypy = "mypy ."
+docs = "mkdocs serve"
 post_install = { composite = [
     "pre-commit autoupdate",
     "pre-commit install",

@@ -1,15 +1,13 @@
 site_name: Staining
 
 nav:
-  - Home: index.md
-  - Getting Started:
-      - Installation: installation.md
-  - Reference:
-      - reference/index.md
-      - reference/color-conversion.md
-      - reference/estimate-stain-vectors.md
-      - reference/constants.md
-      - reference/typing.md
+  - Introduction: index.md
+  - Getting Started: getting-started.md
+  - API Reference:
+      - api/color-conversion.md
+      - estimate_stain_vectors: api/estimate-stain-vectors.md
+      - api/constants.md
+      - api/typing.md
 
 theme:
   name: material
@@ -19,11 +17,11 @@ theme:
     - content.action.view
     - content.code.annotate
     - content.code.copy
+    - content.code.select
     - content.tooltips
     - navigation.indexes
     - navigation.sections
     - navigation.top
-    - navigation.tabs
     - navigation.footer
     - navigation.tracking
     - search.highlight
@@ -52,7 +50,11 @@ theme:
 
 plugins:
   - search
-  - mkdocstrings
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            show_if_no_docstring: true
 
 markdown_extensions:
   - pymdownx.superfences:
@@ -66,3 +68,8 @@ markdown_extensions:
       slugify: !!python/object/apply:pymdownx.slugs.slugify
         kwds:
           case: lower
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight
+  - pymdownx.inlinehilite
