@@ -3,6 +3,7 @@ from typing import Any
 
 import numpy as np
 import pytest
+from conftest import stain2lab
 from numpy.typing import NDArray
 from PIL import Image
 from skimage.color import deltaE_ciede2000
@@ -10,7 +11,7 @@ from skimage.data import immunohistochemistry
 from skimage.filters import gaussian
 
 from rationai.staining import ColorConversion, convert_color, estimate_stain_vectors
-from rationai.staining.constants import QUPATH_DAB, QUPATH_E, QUPATH_H
+from rationai.staining.constants import LIGHT_H, QUPATH_DAB, QUPATH_E, QUPATH_H
 from rationai.staining.typing import StainArray, Tile
 
 
@@ -45,22 +46,32 @@ DATA = [
         QUPATH_DAB,
     ),
     (
-        np.asarray(Image.open(GENERATED_DIR / "h_e.jpg")),
+        np.asarray(Image.open(GENERATED_DIR / "h_e.png")),
         QUPATH_H,
         QUPATH_E,
     ),
     (
-        np.asarray(Image.open(GENERATED_DIR / "h_dab.jpg")),
+        np.asarray(Image.open(GENERATED_DIR / "h_dab.png")),
+        LIGHT_H,
+        QUPATH_DAB,
+    ),
+    (
+        np.asarray(Image.open(GENERATED_DIR / "h_dab_legacy.png")),
         QUPATH_H,
         QUPATH_DAB,
     ),
     (
-        _blur(np.asarray(Image.open(GENERATED_DIR / "h_e.jpg")), sigma=5),
+        _blur(np.asarray(Image.open(GENERATED_DIR / "h_e.png")), sigma=5),
         QUPATH_H,
         QUPATH_E,
     ),
     (
-        _blur(np.asarray(Image.open(GENERATED_DIR / "h_dab.jpg")), sigma=5),
+        _blur(np.asarray(Image.open(GENERATED_DIR / "h_dab.png")), sigma=5),
+        LIGHT_H,
+        QUPATH_DAB,
+    ),
+    (
+        _blur(np.asarray(Image.open(GENERATED_DIR / "h_dab_legacy.png")), sigma=5),
         QUPATH_H,
         QUPATH_DAB,
     ),
@@ -72,11 +83,13 @@ DATA = [
 ]
 
 IDS = [
-    "Default skimage image H&DAB",
+    "Default skimage image H&DAB_LEGACY",
     "Artificial H&E",
     "Artificial H&DAB",
+    "Artificial H&DAB_LEGACY",
     "Blurred Artificial H&E",
     "Blurred Artificial H&DAB",
+    "Blurred Artificial H&DAB_LEGACY",
     "Empty Image",
 ]
 
@@ -101,5 +114,8 @@ class TestStainEstimator:
         stain1, stain2 = estimate_stain_vectors(img)
         delta = deltaE_ciede2000
 
-        assert delta(stain1, expected1) < 1 or self._both_nan(stain1, expected1)
-        assert delta(stain2, expected2) < 1 or self._both_nan(stain2, expected2)
+        stain1, stain2 = stain2lab(stain1), stain2lab(stain2)
+        expected1, expected2 = stain2lab(expected1), stain2lab(expected2)
+
+        assert delta(stain1, expected1) < 15 or self._both_nan(stain1, expected1)
+        assert delta(stain2, expected2) < 15 or self._both_nan(stain2, expected2)

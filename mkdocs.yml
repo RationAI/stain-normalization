@@ -6,6 +6,7 @@ nav:
   - API Reference:
       - api/color-conversion.md
       - estimate_stain_vectors: api/estimate-stain-vectors.md
+      - modify_and_reconstruct: api/modify-and-reconstruct.md
       - api/constants.md
       - api/typing.md
 

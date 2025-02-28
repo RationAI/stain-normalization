@@ -2,8 +2,17 @@ import numpy as np
 import pytest
 from numpy.typing import NDArray
 from PIL import Image
+from skimage.color import rgb2lab
 
-from rationai.staining.typing import RGBArray
+from rationai.staining.typing import RGBArray, StainArray
+
+
+def stain2lab(stain: StainArray) -> NDArray[np.float64]:
+    """Converts a pixel in stain space to LAB space."""
+    stain = np.maximum(stain, 1e-6)
+    rgb = np.exp(stain)
+
+    return rgb2lab(rgb)
 
 
 @pytest.fixture

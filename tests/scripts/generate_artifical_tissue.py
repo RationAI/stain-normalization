@@ -11,6 +11,7 @@ ZEROS = np.zeros(shape=(512, 512), dtype=np.float64)
 H_RGB = np.array([88, 76, 180], dtype=np.uint8)  # from QuPath
 E_RGB = np.array([199, 50, 112], dtype=np.uint8)  # from QuPath
 DAB_RGB = np.array([186, 110, 56], dtype=np.uint8)  # from QuPath
+LIGHT_H_RGB = np.array([38, 123, 223], dtype=np.uint8)
 
 
 def _stretch(x: NDArray[np.float64], down: float, up: float) -> NDArray[np.float64]:
@@ -58,10 +59,13 @@ def artificial_image(c0: RGBArray, c1: RGBArray, conv: ColorConversion) -> RGBAr
 
 def main() -> None:
     h_e = artificial_image(H_RGB, E_RGB, ColorConversion.RGB2HER)
-    Image.fromarray(h_e).save("tests/data/generated/h_e.jpg")
+    Image.fromarray(h_e).save("tests/data/generated/h_e.png")
 
-    h_dab = artificial_image(H_RGB, DAB_RGB, ColorConversion.RGB2HDR)
-    Image.fromarray(h_dab).save("tests/data/generated/h_dab.jpg")
+    h_dab_legacy = artificial_image(H_RGB, DAB_RGB, ColorConversion.RGB2HDR_LEGACY)
+    Image.fromarray(h_dab_legacy).save("tests/data/generated/h_dab_legacy.png")
+
+    h_dab = artificial_image(LIGHT_H_RGB, DAB_RGB, ColorConversion.RGB2HDR)
+    Image.fromarray(h_dab).save("tests/data/generated/h_dab.png")
 
 
 if __name__ == "__main__":

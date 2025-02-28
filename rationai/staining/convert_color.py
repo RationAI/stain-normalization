@@ -4,9 +4,9 @@ from typing import overload
 
 import numpy as np
 from PIL.Image import Image
-from skimage.color import combine_stains, separate_stains
+from skimage.color import combine_stains
 
-from rationai.staining.constants import QUPATH_DAB, QUPATH_E, QUPATH_H
+from rationai.staining.constants import LIGHT_H, QUPATH_DAB, QUPATH_E, QUPATH_H
 from rationai.staining.typing import (
     RGBArray,
     StainArray,
@@ -42,16 +42,35 @@ class ColorConversion(Enum):
     """**Combines** `Hematoxylin`, `Eosin` and `Residual` channels **to RGB**."""
 
     HDR2RGB = (
-        (QUPATH_H, QUPATH_DAB, residual(QUPATH_H, QUPATH_DAB)),
+        (LIGHT_H, QUPATH_DAB, residual(LIGHT_H, QUPATH_DAB)),
         ConversionType.STAIN2RGB,
     )
     """**Combines** `Hematoxylin`, `DAB` and `Residual` channels **to RGB**."""
 
-    RGB2HER = (inv_mat(HER2RGB[0]), ConversionType.RGB2STAIN)
-    """**Separates RGB image** into `Hematoxylin`, `Eosin` and `Residual` channels."""
+    HDR2RGB_LEGACY = (
+        (QUPATH_H, QUPATH_DAB, residual(QUPATH_H, QUPATH_DAB)),
+        ConversionType.STAIN2RGB,
+    )
+    """**Combines** `Hematoxylin`, `DAB` and `Residual` channels **to RGB**.
+    
+    This conversion uses the Hematoxylin vector from QuPath, and it is no longer
+    recommended and is marked as legacy as it did not
+    provide expected results for staining detection and separation.
+    """
 
     RGB2HDR = (inv_mat(HDR2RGB[0]), ConversionType.RGB2STAIN)
     """**Separates RGB image** into `Hematoxylin`, `DAB` and `Residual` channels."""
+
+    RGB2HER = (inv_mat(HER2RGB[0]), ConversionType.RGB2STAIN)
+    """**Separates RGB image** into `Hematoxylin`, `Eosin` and `Residual` channels."""
+
+    RGB2HDR_LEGACY = (inv_mat(HDR2RGB_LEGACY[0]), ConversionType.RGB2STAIN)
+    """**Separates RGB image** into `Hematoxylin`, `DAB` and `Residual` channels.
+    
+    This conversion uses the Hematoxylin vector from QuPath, and it is no longer
+    recommended and is marked as legacy as it did not
+    provide expected results for staining detection and separation.
+    """
 
     @property
     def conv_type(self) -> ConversionType:
@@ -80,31 +99,57 @@ class ColorConversion(Enum):
             Inverse color conversion (i. e., RGB2HER is inverse to HER2RGB).
         """
         match self:
+            # H&E Protocol
             case ColorConversion.RGB2HER:
                 return ColorConversion.HER2RGB
-            case ColorConversion.RGB2HDR:
-                return ColorConversion.HDR2RGB
             case ColorConversion.HER2RGB:
                 return ColorConversion.RGB2HER
+
+            # H&DAB Protocol
+            case ColorConversion.RGB2HDR:
+                return ColorConversion.HDR2RGB
             case ColorConversion.HDR2RGB:
                 return ColorConversion.RGB2HDR
+
+            # Legacy H&DAB Protocol
+            case ColorConversion.RGB2HDR_LEGACY:
+                return ColorConversion.HDR2RGB_LEGACY
+            case ColorConversion.HDR2RGB_LEGACY:
+                return ColorConversion.RGB2HDR_LEGACY
+
+
+def _separate_stains(
+    img: RGBArray | Image, rgb2stain: StainArray, keep_negative_values: bool = False
+) -> StainArray:
+    values = np.maximum(np.asarray(img).astype(np.float64) / 255, 1e-6)
+    stains = (np.log(values) / np.log(1e-6)) @ rgb2stain
+
+    if not keep_negative_values:
+        stains = np.maximum(stains, 0)
+
+    return stains
 
 
 @overload
 def convert_color(
-    tile: RGBArray | Image, conversion: ColorConversion
+    tile: RGBArray | Image,
+    conversion: ColorConversion,
+    keep_negative_values: bool = False,
 ) -> tuple[StainArray, ...]: ...
 
 
 @overload
 def convert_color(
-    tile: StainArray | Sequence[StainArray], conversion: ColorConversion
+    tile: StainArray | Sequence[StainArray],
+    conversion: ColorConversion,
+    keep_negative_values: bool = False,
 ) -> RGBArray: ...
 
 
 def convert_color(
     tile: RGBArray | Image | StainArray | Sequence[StainArray],
     conversion: ColorConversion,
+    keep_negative_values: bool = False,
 ) -> RGBArray | tuple[StainArray, ...]:
     """Converts a tile into the specified color space.
 
@@ -120,11 +165,15 @@ def convert_color(
         tile: Tile that should be converted. Can either be a RGB image or three stain
             channels stacked along the last axis. Stain channels can be stacked using
             the following code:
-            >>> stacked_stains = np.stack([c0, c1, c2], axis=-1)
-
+            ```python
+            stacked_stains = np.stack([c0, c1, c2], axis=-1)
+            ```
             Here, `c[0-2]` are the individual stain channels.
 
         conversion: Desired color conversion.
+
+        keep_negative_values: Decides if the negative values produced by color separation
+            should be kept.
 
     Returns:
         Depending on the conversion, the result can either be a RGB image,
@@ -132,10 +181,17 @@ def convert_color(
     """
     match conversion.conv_type:
         case ConversionType.RGB2STAIN:
-            return tuple(np.moveaxis(separate_stains(tile, conversion.matrix), -1, 0))
+            return tuple(
+                np.moveaxis(
+                    _separate_stains(tile, conversion.matrix, keep_negative_values),  # type: ignore[arg-type]
+                    -1,
+                    0,
+                )
+            )
 
         case ConversionType.STAIN2RGB:
             if isinstance(tile, Sequence):
                 tile = np.stack(tile, axis=-1)
+
             tile = np.asarray(tile, dtype=np.float64)
             return (255 * combine_stains(tile, conversion.matrix)).astype(np.uint8)

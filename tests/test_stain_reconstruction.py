@@ -13,12 +13,16 @@ IMAGES_AND_CONVS = [
         ColorConversion.RGB2HDR,
     ),
     (
+        immunohistochemistry(),
+        ColorConversion.RGB2HDR_LEGACY,
+    ),
+    (
         "sample1_original",
         ColorConversion.RGB2HER,
     ),
 ]
 
-TEST_IDS = ["skimage-default; H&DAB", "Sample1; H&E"]
+TEST_IDS = ["skimage-default; H&DAB", "skimage-default; H&DAB_LEGACY", "Sample1; H&E"]
 
 
 @pytest.mark.parametrize("original,conv", IMAGES_AND_CONVS, ids=TEST_IDS)

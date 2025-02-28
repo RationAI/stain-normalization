@@ -10,6 +10,7 @@ from rationai.staining.typing import RGBArray, StainArray
 RGB_CONVERSIONS = [
     ColorConversion.RGB2HER,
     ColorConversion.RGB2HDR,
+    ColorConversion.RGB2HDR_LEGACY,
 ]
 RGB_NAMES = [c.name for c in RGB_CONVERSIONS]
 
