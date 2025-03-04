@@ -1,0 +1,2 @@
+_target_: stain_normalization.modeling.backbone.resnet50
+weights: null

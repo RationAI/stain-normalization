@@ -1,0 +1,12 @@
+_target_: albumentations.OneOf
+transforms:
+  - _target_: stain_normalization.data.transformation.HED
+    h_range: [0.8, 1.2]
+    e_range: [0.8, 1.2]
+  - _target_: stain_normalization.data.transformation.ExposureAdjustment
+    brightness_range: [0.8, 1.2]
+  - _target_: UnnaturalColorModification
+    hue_shift_range: [0.2, 1.0]
+  - _target_: CombinedModifications
+    brightness_range: [-0.4, 0.4]
+    intensity_range: [0.65, 1.35]

@@ -1,0 +1,68 @@
+from collections import defaultdict
+
+import torch
+from lightning import LightningModule
+from torch import Tensor, nn
+from torch.optim.optimizer import Optimizer
+from stain_normalization.modeling import L1SSIMLoss
+from stain_normalization.typing import Input, Outputs
+from torch.optim import Adam
+from torch.optim.optimizer import Optimizer     
+from torchmetrics import PeakSignalNoiseRatio,StructuralSimilarityIndexMeasure, MetricCollection
+
+class StainNormalizationModel(LightningModule):
+    def __init__(self, backbone: nn.Module, decode_head: nn.Module) -> None:
+        super().__init__()
+        self.backbone = backbone
+        self.decode_head = decode_head
+        self.criterion = L1SSIMLoss() 
+
+        self.val_metrics = MetricCollection(
+            {
+                "ssim": StructuralSimilarityIndexMeasure(),
+                "psnr": PeakSignalNoiseRatio()
+            }
+        )  
+        self.test_metrics = self.val_metrics.clone(prefix="test/")
+        self.val_metrics.prefix = "validation/"
+
+    def forward(self, x: Input) -> Outputs:
+        features = self.backbone(x)
+        return self.decode_head(features)
+
+    def training_step(self, batch: Input) -> Tensor:
+        inputs, targets = batch
+        outputs = self(inputs)
+
+        loss = self.criterion(outputs, targets)
+        self.log("train/loss", loss, on_step=True, prog_bar=True)
+
+        return loss
+
+    def validation_step(self, batch: Input) -> None:
+        inputs, targets = batch
+        outputs = self(inputs)
+
+        loss = self.criterion(outputs, targets)
+        self.log("validation/loss", loss, on_step=False, on_epoch=True)
+        self.val_metrics.update(outputs, targets)
+        self.log_dict(
+            self.val_metrics,
+            batch_size=len(inputs),
+            on_epoch=True,
+        )
+        
+
+    def test_step(self, batch: Input) -> None:
+        inputs, targets = batch
+        outputs = self(inputs)
+        self.test_metrics.update(outputs, targets)
+        self.log_dict(
+            self.test_metrics,
+            batch_size=len(inputs),
+            on_epoch=True,
+        )    
+
+
+    def configure_optimizers(self) -> Optimizer:
+        return Adam(self.parameters(), lr=1e-4)

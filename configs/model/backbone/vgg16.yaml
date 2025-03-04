@@ -1,0 +1,2 @@
+_target_: stain_normalization.modeling.backbone.vgg16
+weights: null

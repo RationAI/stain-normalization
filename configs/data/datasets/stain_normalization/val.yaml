@@ -1,0 +1,7 @@
+defaults:
+  - /data/transforms@transforms: test
+  - /data/modify@modify: test
+  
+_target_: stain_normalization.data.datasets.StainNormalization
+uris: ["mlflow-artifacts:"]
+

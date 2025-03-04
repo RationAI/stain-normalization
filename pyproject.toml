@@ -1,27 +1,43 @@
 [project]
-name = "rationai-staining"
+name = "project-name"
 version = "0.1.0"
-description = ""
-authors = [{ name = "Tomáš Balák" }]
+authors = []
 requires-python = ">=3.11"
 readme = "README.md"
 license = { file = "LICENSE" }
-dependencies = ["numpy>=1.26.4", "pillow>=10.3.0", "scikit-image>=0.23.2"]
+dependencies = [
+    "torch>=2.4.0",
+    "lightning>=2.4.0",
+    "torchmetrics>=1.4.1",
+    "rationai-mlkit @ git+https://gitlab.ics.muni.cz/rationai/digital-pathology/libraries/mlkit.git",
+    "rationai-masks @ git+https://gitlab.ics.muni.cz/rationai/digital-pathology/libraries/masks.git",
+    "rationai-tiling @ git+https://gitlab.ics.muni.cz/rationai/digital-pathology/libraries/tiling.git",
+    "albumentations>=2.0.4",
+    "scikit-learn>=1.6.1",
+    "torchvision>=0.21.0",
+    "rationai-kube-jobs @ git+ssh://git@gitlab.ics.muni.cz/rationai/digital-pathology/libraries/kube-jobs.git",
+]
 
 [tool.pdm.dev-dependencies]
 dev = ["mypy", "pre-commit", "ruff"]
-test = ["pytest", "pytest-cov", "perlin-noise>=1.12"]
-docs = ["mkdocs-material>=9.5.32", "mkdocstrings[python]>=0.25.2"]
 
 [tool.pdm.scripts]
+mask_generate = "python preprocessing/mask_generator.py"
+tiler = "python preprocessing/tiler.py"
+
+train = "python -m project_name mode=fit"
+validate = "python -m project_name mode=validate"
+test = "python -m project_name mode=test"
+predict = "python -m project_name mode=predict"
 l = { composite = ["lint", "format", "mypy"] }
-test = "pytest tests"
 lint = "ruff check --fix"
 format = "ruff format"
 mypy = "mypy ."
-docs = "mkdocs serve"
 post_install = { composite = [
     "pre-commit autoupdate",
     "pre-commit install",
     "pre-commit install --hook-type commit-msg",
 ] }
+
+[tool.pdm]
+distribution = false
