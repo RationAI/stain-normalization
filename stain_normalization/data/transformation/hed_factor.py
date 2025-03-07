@@ -12,7 +12,7 @@ class HEDFactor(ImageOnlyTransform):
         self.h_range = h_range
         self.e_range = e_range
 
-    def apply(self, img, **params):
+    def apply(self, img, **params):        
         h_factor = np.random.uniform(*self.h_range)
         e_factor = np.random.uniform(*self.e_range)
 
