@@ -1,5 +1,4 @@
 decode_head:
   _target_: stain_normalization.modeling.decode_head.UNetDecoder
   in_channels: 512
-  weights: null
 

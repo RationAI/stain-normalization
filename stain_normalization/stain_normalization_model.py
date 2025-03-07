@@ -1,14 +1,12 @@
-from collections import defaultdict
-
-import torch
 from lightning import LightningModule
 from torch import Tensor, nn
 from torch.optim.optimizer import Optimizer
 from stain_normalization.modeling import L1SSIMLoss
 from stain_normalization.typing import Input, Outputs
 from torch.optim import Adam
-from torch.optim.optimizer import Optimizer     
-from torchmetrics import PeakSignalNoiseRatio,StructuralSimilarityIndexMeasure, MetricCollection
+from torch.optim.optimizer import Optimizer 
+from torchmetrics.image import PeakSignalNoiseRatio,StructuralSimilarityIndexMeasure
+from torchmetrics import  MetricCollection
 
 class StainNormalizationModel(LightningModule):
     def __init__(self, backbone: nn.Module, decode_head: nn.Module) -> None:

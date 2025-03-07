@@ -1,21 +1,21 @@
 from collections.abc import Iterable
 
 import pandas as pd
-from albumentations import TransformType
+from albumentations import Transform3D
 from albumentations.pytorch import ToTensorV2
 from rationai.mlkit.data.datasets import MetaTiledSlides, OpenSlideTilesDataset
 from torch.utils.data import Dataset
 
-from stain_normalization.typing import Metadata, PredictSample, Sample
+from stain_normalization.typing import PredictSample, Sample
 
 
 class StainNormalization(MetaTiledSlides[Sample]):
     def __init__(
         self,
         uris: Iterable[str],
-        modify:TransformType,
-        transforms: TransformType | None = None,
-
+        modify: Transform3D,
+        transforms: Transform3D | None = None,
+        
     ) -> None:
         self.modify = modify
         self.transforms = transforms
@@ -38,8 +38,8 @@ class StainNormalizationPredict(MetaTiledSlides[PredictSample]):
     def __init__(
         self,
         uris: Iterable[str],
-        modify:TransformType,
-        transforms: TransformType | None = None,
+        modify: Transform3D,
+        transforms: Transform3D | None = None,
 
     ) -> None:        
         self.modify = modify
@@ -65,8 +65,8 @@ class _StainNormalizationSlideTiles(Dataset[Sample | PredictSample]):
         slide_metadata: pd.Series,
         tiles: pd.DataFrame,
         include_target: bool,
-        transforms: TransformType | None = None,
-        modify:TransformType | None = None,
+        modify: Transform3D,
+        transforms: Transform3D | None = None,
     ) -> None:
         super().__init__()
         self.slide_tiles = OpenSlideTilesDataset(
@@ -90,8 +90,8 @@ class _StainNormalizationSlideTiles(Dataset[Sample | PredictSample]):
 
         if self.transforms is not None:
             original_image = self.transforms(image=original_image)["image"]
-        
-        modified_image = self.modify(original_image)["image"]
+
+        modified_image = self.modify(image=original_image)["image"]
 
         # modification_name = "Original"
         # if self.modify:

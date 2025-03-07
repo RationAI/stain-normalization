@@ -1,21 +1,22 @@
 [project]
-name = "project-name"
+name = "Stain Normalization"
 version = "0.1.0"
-authors = []
+authors = ["Adam Lopatka"]
 requires-python = ">=3.11"
 readme = "README.md"
 license = { file = "LICENSE" }
 dependencies = [
-    "torch>=2.4.0",
-    "lightning>=2.4.0",
-    "torchmetrics>=1.4.1",
+    "lightning>=2.0.0",
+    "albumentations>=1.4.14",
+    "torchmetrics>=1.4.14",
+    "torchvision>=0.17.2",
+    "torch>=2.2.2",
+    "tqdm>=4.66.5",
     "rationai-mlkit @ git+https://gitlab.ics.muni.cz/rationai/digital-pathology/libraries/mlkit.git",
     "rationai-masks @ git+https://gitlab.ics.muni.cz/rationai/digital-pathology/libraries/masks.git",
     "rationai-tiling @ git+https://gitlab.ics.muni.cz/rationai/digital-pathology/libraries/tiling.git",
-    "albumentations>=2.0.4",
-    "scikit-learn>=1.6.1",
-    "torchvision>=0.21.0",
     "rationai-kube-jobs @ git+ssh://git@gitlab.ics.muni.cz/rationai/digital-pathology/libraries/kube-jobs.git",
+    "scikit-image>=0.25.2"
 ]
 
 [tool.pdm.dev-dependencies]
@@ -25,19 +26,19 @@ dev = ["mypy", "pre-commit", "ruff"]
 mask_generate = "python preprocessing/mask_generator.py"
 tiler = "python preprocessing/tiler.py"
 
-train = "python -m project_name mode=fit"
-validate = "python -m project_name mode=validate"
-test = "python -m project_name mode=test"
-predict = "python -m project_name mode=predict"
+train = "python -m stain_normalization mode=fit"
+validate = "python -m stain_normalization mode=validate"
+test = "python -m stain_normalization mode=test"
+predict = "python -m stain_normalization mode=predict"
 l = { composite = ["lint", "format", "mypy"] }
 lint = "ruff check --fix"
 format = "ruff format"
 mypy = "mypy ."
-post_install = { composite = [
-    "pre-commit autoupdate",
-    "pre-commit install",
-    "pre-commit install --hook-type commit-msg",
-] }
+# post_install = { composite = [
+#    "pre-commit autoupdate",
+#    "pre-commit install",
+#    "pre-commit install --hook-type commit-msg",
+#] }
 
 [tool.pdm]
 distribution = false
