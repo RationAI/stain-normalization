@@ -2,11 +2,11 @@ from kube_jobs import Storage, submit_job
 
 
 submit_job(
-    job_name="Stain Normalization Train",
+    job_name="stain-normalization-train",
     username="xlopatka",
     cpu=10,
     memory="128Gi",
-    gpu="A40",
+    gpu="H100",
     script=[
         "git clone https://gitlab.ics.muni.cz/rationai/digital-pathology/libraries/staining.git",
         "cd staining",
