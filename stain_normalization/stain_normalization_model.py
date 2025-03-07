@@ -12,7 +12,7 @@ class StainNormalizationModel(LightningModule):
     def __init__(self, backbone: nn.Module, decode_head: nn.Module) -> None:
         super().__init__()
         self.backbone = backbone
-        self.decode_head = decode_head
+        self.decode_head = decode_head()
         self.criterion = L1SSIMLoss() 
 
         self.val_metrics = MetricCollection(
