@@ -105,8 +105,8 @@ class _StainNormalizationSlideTiles(Dataset[Sample | PredictSample]):
         #         modification=modification_name
         #     )
 
-        original_image = self.to_tensor(image=original_image)["image"]
-        modified_image = self.to_tensor(image=modified_image)["image"]
+        original_image = self.to_tensor(image=original_image)["image"].float()
+        modified_image = self.to_tensor(image=modified_image)["image"].float()
 
         if self.include_target:
             return modified_image, original_image
