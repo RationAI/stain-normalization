@@ -6,7 +6,8 @@ submit_job(
     username="xlopatka",
     cpu=10,
     memory="128Gi",
-    gpu="H100",
+    gpu="A40",
+    shm="16384Mi",
     script=[
         "git clone https://gitlab.ics.muni.cz/rationai/digital-pathology/libraries/staining.git",
         "cd staining",

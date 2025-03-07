@@ -24,7 +24,7 @@ trainer:
       mode: min
 
 data:
-  batch_size: 64
+  batch_size: 128
   num_workers: 4
 
 metadata:
