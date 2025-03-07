@@ -30,7 +30,7 @@ data:
 metadata:
   user: xlopatka
   experiment_name: Stain-Normalization
-  run_name: Testing #First Train Stain Normalization
+  run_name: First Train Stain Normalization
   description: Testing Stain Normalization
   hyperparams: {}
 
