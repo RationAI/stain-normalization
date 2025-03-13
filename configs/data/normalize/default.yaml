@@ -1,0 +1,10 @@
+_target_: albumentations.Normalize
+mean: 
+  - 0.780361961
+  - 0.614529804
+  - 0.725567843
+std: 
+  - 0.144428627
+  - 0.183275686
+  - 0.140768627
+max_pixel_value: 1

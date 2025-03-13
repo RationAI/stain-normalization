@@ -1,5 +1,6 @@
 from collections.abc import Iterable
 
+import numpy as np
 import pandas as pd
 from albumentations import Transform3D
 from albumentations.pytorch import ToTensorV2
@@ -14,11 +15,13 @@ class StainNormalization(MetaTiledSlides[Sample]):
         self,
         uris: Iterable[str],
         modify: Transform3D,
+        normalize: Transform3D | None = None,  
         transforms: Transform3D | None = None,
         
     ) -> None:
         self.modify = modify
         self.transforms = transforms
+        self.normalize = normalize
         super().__init__(uris=uris)
 
     def generate_datasets(self) -> Iterable[Dataset[Sample]]:
@@ -28,6 +31,7 @@ class StainNormalization(MetaTiledSlides[Sample]):
                 tiles=self.filter_tiles_by_slide(slide["id"]),
                 include_target=True,
                 modify=self.modify,
+                normalize=self.normalize,
                 transforms=self.transforms,
             )
             for _, slide in self.slides.iterrows()
@@ -39,10 +43,12 @@ class StainNormalizationPredict(MetaTiledSlides[PredictSample]):
         self,
         uris: Iterable[str],
         modify: Transform3D,
+        normalize: Transform3D | None = None, 
         transforms: Transform3D | None = None,
 
     ) -> None:        
         self.modify = modify
+        self.normalize = normalize
         self.transforms = transforms
         super().__init__(uris=uris)
 
@@ -53,6 +59,7 @@ class StainNormalizationPredict(MetaTiledSlides[PredictSample]):
                 tiles=self.filter_tiles_by_slide(slide["id"]),
                 include_target=False,
                 modify=self.modify,
+                normalize=self.normalize,
                 transforms=self.transforms,
             )
             for _, slide in self.slides.iterrows()
@@ -66,6 +73,7 @@ class _StainNormalizationSlideTiles(Dataset[Sample | PredictSample]):
         tiles: pd.DataFrame,
         include_target: bool,
         modify: Transform3D,
+        normalize: Transform3D | None = None,  
         transforms: Transform3D | None = None,
     ) -> None:
         super().__init__()
@@ -76,38 +84,36 @@ class _StainNormalizationSlideTiles(Dataset[Sample | PredictSample]):
             tile_extent_y=slide_metadata.tile_extent_y,
             tiles=tiles,
         )
+        self.modify = modify
+        self.normalize = normalize
         self.transforms = transforms
         self.include_target = include_target
         self.to_tensor = ToTensorV2()
-        self.modify = modify
 
     def __len__(self) -> int:
         return len(self.slide_tiles)
 
     def __getitem__(self, idx: int) -> Sample | PredictSample:
         original_image = self.slide_tiles[idx]
-        
 
+        # This is not distruptive transform as rotate, flip 
         if self.transforms is not None:
             original_image = self.transforms(image=original_image)["image"]
 
+        # Create "wrong" image to use as input. Outputs image in float 0-1
         modified_image = self.modify(image=original_image)["image"]
+        
+        if np.max(original_image) > 1.0:  
+            original_image = original_image / 255.0 
 
-        # modification_name = "Original"
-        # if self.modify:
-        #     out = self.modify(original_image)
-        #     modified_image = out["image"]
-        #     modification_name = out["modification_name"]  
-        # metadata = Metadata(
-        #         slide=self.slide_tiles.slide_path.stem,
-        #         x=self.slide_tiles.tiles.iloc[idx]["x"],
-        #         y=self.slide_tiles.tiles.iloc[idx]["y"],
-        #         modification=modification_name
-        #     )
+        if self.normalize:
+            original_image = self.normalize(image=original_image)["image"]
+            modified_image = self.normalize(image=modified_image)["image"]
 
         original_image = self.to_tensor(image=original_image)["image"].float()
         modified_image = self.to_tensor(image=modified_image)["image"].float()
-
+        
+        
         if self.include_target:
             return modified_image, original_image
         
