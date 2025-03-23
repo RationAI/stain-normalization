@@ -5,21 +5,58 @@ from torch.autograd import Variable
 from math import exp
 
 
-class L1SSIMLoss(nn.Module):
-    def __init__(self, lambda_dssim: float = 0.5):
+class L1SSIMLoss(nn.Module):  
+    def __init__(self, lambda_dssim: float = 0.6, lambda_gdl: float = 0.2, lambda_hf: float = 0.1):
         super().__init__()
         self.lambda_dssim = lambda_dssim
+        self.lambda_gdl = lambda_gdl
+        self.lambda_hf = lambda_hf
 
     def forward(self, image: torch.Tensor, target_image: torch.Tensor) -> torch.Tensor:
-        
-        Ll1 = F.l1_loss(image, target_image, reduction='mean')
+        Ll1 = F.l1_loss(image, target_image, reduction='mean')  # L1 loss
+        ssim_loss = 1.0 - ssim(image, target_image)  # SSIM loss
 
-        ssim_loss = 1.0 - ssim(image, target_image)
+        gdl_loss = gradient_loss(image, target_image)  # GDL for sharp edges
+        hf_loss = high_frequency_loss(image, target_image)  # HF loss for textures
 
         total_loss = (1.0 - self.lambda_dssim) * Ll1 + \
-            self.lambda_dssim * ssim_loss
+                     self.lambda_dssim * ssim_loss + \
+                     self.lambda_gdl * gdl_loss + \
+                     self.lambda_hf * hf_loss
+
         return total_loss
 
+
+def laplacian_filter(image):
+    kernel = torch.tensor([[0, -1, 0], [-1, 4, -1], [0, -1, 0]], dtype=torch.float32)
+    kernel = kernel.view(1, 1, 3, 3).to(image.device)  
+
+    filtered = []
+    for i in range(image.shape[1]): 
+        filtered.append(F.conv2d(image[:, i:i+1, :, :], kernel, padding=1))
+    return torch.cat(filtered, dim=1)
+    
+
+def high_frequency_loss(image, target_image):
+    image_lap = laplacian_filter(image)
+    target_lap = laplacian_filter(target_image)
+    
+    return F.l1_loss(image_lap, target_lap, reduction='mean')
+
+
+def gradient_loss(image, target_image):
+    def gradient(x):
+        dx = torch.abs(x[:, :, :-1, :] - x[:, :, 1:, :])  # Horizontal gradient
+        dy = torch.abs(x[:, :, :, :-1] - x[:, :, :, 1:])  # Vertical gradient
+        return dx, dy
+
+    image_dx, image_dy = gradient(image)
+    target_dx, target_dy = gradient(target_image)
+
+    loss_x = F.l1_loss(image_dx, target_dx, reduction='mean')
+    loss_y = F.l1_loss(image_dy, target_dy, reduction='mean')
+
+    return loss_x + loss_y
 
 
 def gaussian(window_size, sigma):
