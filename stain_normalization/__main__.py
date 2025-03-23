@@ -6,6 +6,7 @@ from lightning.pytorch.loggers import Logger
 from omegaconf import DictConfig, OmegaConf
 from rationai.mlkit import Trainer, autolog
 
+from stain_normalization.callbacks.tiles_export import TilesExport
 from stain_normalization.data import DataModule
 from stain_normalization.stain_normalization_model import StainNormalizationModel
 
@@ -27,7 +28,9 @@ def main(config: DictConfig, logger: Logger | None) -> None:
     )
     model = hydra.utils.instantiate(config.model, _target_=StainNormalizationModel)
 
-    trainer = hydra.utils.instantiate(config.trainer, _target_=Trainer, logger=logger)
+    tile_export_callbeck = TilesExport(config.output_dir, config.data.predict.normalize)
+
+    trainer = hydra.utils.instantiate(config.trainer, _target_=Trainer, logger=logger, callbacks=[tile_export_callbeck])
     getattr(trainer, config.mode)(model, datamodule=data, ckpt_path=config.checkpoint)
 
 

@@ -16,7 +16,8 @@ dependencies = [
     "rationai-masks @ git+https://gitlab.ics.muni.cz/rationai/digital-pathology/libraries/masks.git",
     "rationai-tiling @ git+https://gitlab.ics.muni.cz/rationai/digital-pathology/libraries/tiling.git",
     "rationai-kube-jobs @ git+ssh://git@gitlab.ics.muni.cz/rationai/digital-pathology/libraries/kube-jobs.git",
-    "scikit-image>=0.25.2"
+    "scikit-image>=0.25.2",
+    "openslide-bin>=4.0.0.6"
 ]
 
 [tool.pdm.dev-dependencies]

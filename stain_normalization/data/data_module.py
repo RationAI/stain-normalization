@@ -1,4 +1,6 @@
+from typing import Any
 from collections.abc import Iterable
+from torch import Tensor
 
 from hydra.utils import instantiate
 from lightning import LightningDataModule
@@ -6,6 +8,7 @@ from omegaconf import DictConfig
 from torch.utils.data import DataLoader
 
 from stain_normalization.typing import Input
+from stain_normalization.data.utils import collate_fn
 
 
 class DataModule(LightningDataModule):
@@ -26,6 +29,9 @@ class DataModule(LightningDataModule):
                 self.val = instantiate(self.datasets["val"])
             case "test":
                 self.test = instantiate(self.datasets["test"])
+            case "predict":
+                # this need predict val is for debuging only
+                self.predict = instantiate(self.datasets["predict"])
 
     def train_dataloader(self) -> Iterable[Input]:
         return DataLoader(
@@ -48,4 +54,12 @@ class DataModule(LightningDataModule):
     def test_dataloader(self) -> Iterable[Input]:
         return DataLoader(
             self.test, batch_size=self.batch_size, num_workers=self.num_workers
+        )
+
+    def predict_dataloader(self) -> Iterable[tuple[Tensor, list[dict[str, Any]]]]:
+        return DataLoader(
+            self.predict, 
+            batch_size=self.batch_size, 
+            num_workers=self.num_workers,
+            collate_fn=collate_fn,
         )

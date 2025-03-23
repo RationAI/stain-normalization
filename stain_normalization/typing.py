@@ -1,4 +1,4 @@
-from typing import TypeAlias, TypedDict
+from typing import TypeAlias, TypedDict,  Dict, Any
 
 from torch import Tensor
 
@@ -10,7 +10,7 @@ from torch import Tensor
 # PredictSample: TypeAlias = tuple[Tensor, Metadata]
 # Sample: TypeAlias = tuple[Tensor, Tensor, Metadata]
 
-PredictSample: TypeAlias = tuple[Tensor]
+PredictSample: TypeAlias = tuple[Tensor, Dict[str, Any]]
 Sample: TypeAlias = tuple[Tensor, Tensor]
 
 Input: TypeAlias = Sample

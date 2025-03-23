@@ -94,27 +94,25 @@ class _StainNormalizationSlideTiles(Dataset[Sample | PredictSample]):
         return len(self.slide_tiles)
 
     def __getitem__(self, idx: int) -> Sample | PredictSample:
-        original_image = self.slide_tiles[idx]
-
+        original_image_255 = self.slide_tiles[idx]
         # This is not distruptive transform as rotate, flip 
         if self.transforms is not None:
-            original_image = self.transforms(image=original_image)["image"]
+            original_image_255 = self.transforms(image=original_image)["image"]
 
         # Create "wrong" image to use as input. Outputs image in float 0-1
-        modified_image = self.modify(image=original_image)["image"]
-        
-        if np.max(original_image) > 1.0:  
-            original_image = original_image / 255.0 
+        modified_image_raw = self.modify(image=original_image_255)["image"]
+        modified_image = modified_image_raw
+        original_image = original_image_255 / 255.0 
 
         if self.normalize:
             original_image = self.normalize(image=original_image)["image"]
             modified_image = self.normalize(image=modified_image)["image"]
 
-        original_image = self.to_tensor(image=original_image)["image"].float()
-        modified_image = self.to_tensor(image=modified_image)["image"].float()
+        original_image = self.to_tensor(image=original_image)["image"]
+        modified_image = self.to_tensor(image=modified_image)["image"]
         
         
         if self.include_target:
             return modified_image, original_image
         
-        return modified_image
+        return modified_image, {"original_image":original_image_255, "modified_image":modified_image_raw,"index":idx} 

@@ -7,6 +7,7 @@ from torch.optim import Adam
 from torch.optim.optimizer import Optimizer 
 from torchmetrics.image import PeakSignalNoiseRatio,StructuralSimilarityIndexMeasure
 from torchmetrics import  MetricCollection
+from typing import Any
 
 class StainNormalizationModel(LightningModule):
     def __init__(self, backbone: nn.Module, decode_head: nn.Module) -> None:
@@ -61,6 +62,9 @@ class StainNormalizationModel(LightningModule):
             on_epoch=True,
         )    
 
+    def predict_step(self, batch: tuple[Tensor, Any], batch_idx: int, dataloader_idx: int = 0) -> Outputs:
+        inputs = batch[0]
+        return self(inputs)
 
     def configure_optimizers(self) -> Optimizer:
         return Adam(self.parameters(), lr=1e-4)

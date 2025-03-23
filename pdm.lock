@@ -5,7 +5,7 @@
 groups = ["default", "dev"]
 strategy = ["inherit_metadata"]
 lock_version = "4.5.0"
-content_hash = "sha256:b6548b53106f41b522b88929821234d14bbde40c39c47dafe1e38851ca0ec4e9"
+content_hash = "sha256:5332e3a0a1aebc8df232aacd3e71bbc5bdbaeec0efddc8d0137eafb3cd6c2c32"
 
 [[metadata.targets]]
 requires_python = ">=3.11"
@@ -1731,6 +1731,20 @@ files = [
 ]
 
 [[package]]
+name = "openslide-bin"
+version = "4.0.0.6"
+requires_python = ">=3.8"
+summary = "Binary build of OpenSlide"
+groups = ["default"]
+files = [
+    {file = "openslide-bin-4.0.0.6.tar.gz", hash = "sha256:baca4a590cb15c8685f1ee1905d496bb0a23468b969f7066a2126c24c9e9ef39"},
+    {file = "openslide_bin-4.0.0.6-py3-none-macosx_11_0_universal2.whl", hash = "sha256:f9c4ed0da275202dce531b163d92e1b860d215e779e7620fdd0dd92b7c40764b"},
+    {file = "openslide_bin-4.0.0.6-py3-none-manylinux_2_28_aarch64.whl", hash = "sha256:43af7aabab7aa6d7c21573736de8b59ccf2f4078f0ae26da70d86005d2ee662b"},
+    {file = "openslide_bin-4.0.0.6-py3-none-manylinux_2_28_x86_64.whl", hash = "sha256:0bc2e6d624781b0ba24d2ef3d8623fd52de7645520911539e1279d599212ecb0"},
+    {file = "openslide_bin-4.0.0.6-py3-none-win_amd64.whl", hash = "sha256:d9bb0659bce0384f6f961aa64c0cfdb882c8dacd6f4fbfaf84895e06fe571f40"},
+]
+
+[[package]]
 name = "openslide-python"
 version = "1.4.1"
 requires_python = ">=3.8"
@@ -1898,6 +1912,17 @@ files = [
     {file = "pillow-11.1.0-cp313-cp313t-win_amd64.whl", hash = "sha256:ad5db5781c774ab9a9b2c4302bbf0c1014960a0a7be63278d13ae6fdf88126fe"},
     {file = "pillow-11.1.0-cp313-cp313t-win_arm64.whl", hash = "sha256:67cd427c68926108778a9005f2a04adbd5e67c442ed21d95389fe1d595458756"},
     {file = "pillow-11.1.0.tar.gz", hash = "sha256:368da70808b36d73b4b390a8ffac11069f8a5c85f29eff1f1b01bcf3ef5b2a20"},
+]
+
+[[package]]
+name = "pkgconfig"
+version = "1.5.5"
+requires_python = ">=3.3,<4.0"
+summary = "Interface Python with pkg-config"
+groups = ["default"]
+files = [
+    {file = "pkgconfig-1.5.5-py3-none-any.whl", hash = "sha256:d20023bbeb42ee6d428a0fac6e0904631f545985a10cdd71a20aa58bc47a4209"},
+    {file = "pkgconfig-1.5.5.tar.gz", hash = "sha256:deb4163ef11f75b520d822d9505c1f462761b4309b1bb713d08689759ea8b899"},
 ]
 
 [[package]]
@@ -2223,10 +2248,11 @@ files = [
 [[package]]
 name = "pyvips"
 version = "2.2.3"
-summary = "binding for the libvips image processing library, ABI mode"
+summary = "binding for the libvips image processing library, API mode"
 groups = ["default"]
 dependencies = [
     "cffi>=1.0.0",
+    "pkgconfig",
 ]
 files = [
     {file = "pyvips-2.2.3.tar.gz", hash = "sha256:43bceced0db492654c93008246a58a508e0373ae1621116b87b322f2ac72212f"},
