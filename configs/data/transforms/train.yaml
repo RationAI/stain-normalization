@@ -4,4 +4,9 @@ transforms:
     p: 1.0
   - _target_: albumentations.Flip
     p: 0.75
-
+  - _target_: albumentations.RandomGamma
+    p: 0.5
+  - _target_: albumentations.RandomBrightnessContrast
+    p: 0.5
+  - _target_: albumentations.HueSaturationValue
+    p: 0.5

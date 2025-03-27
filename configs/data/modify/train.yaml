@@ -1,4 +1,5 @@
 _target_: albumentations.OneOf
+p: 1.0 
 transforms:
   - _target_: stain_normalization.data.transformation.HEDFactor
     h_range: [0.8, 1.2]
