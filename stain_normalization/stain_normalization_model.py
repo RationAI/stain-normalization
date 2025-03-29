@@ -43,7 +43,7 @@ class StainNormalizationModel(LightningModule):
         outputs = self(inputs)
 
         loss = self.criterion(outputs, targets)
-        self.log("validation/loss", loss, on_step=False, on_epoch=True)
+        self.log("validation/loss", loss, on_step=True, on_epoch=False)
         self.val_metrics.update(outputs, targets)
         self.log_dict(
             self.val_metrics,
