@@ -17,7 +17,6 @@ class StainNormalization(MetaTiledSlides[Sample]):
         modify: Transform3D,
         normalize: Transform3D | None = None,  
         transforms: Transform3D | None = None,
-        
     ) -> None:
         self.modify = modify
         self.transforms = transforms
@@ -26,10 +25,9 @@ class StainNormalization(MetaTiledSlides[Sample]):
 
     def generate_datasets(self) -> Iterable[Dataset[Sample]]:
         return (
-            _StainNormalizationSlideTiles(
+            _StainNormalizationTrainSlideTiles(
                 slide,
                 tiles=self.filter_tiles_by_slide(slide["id"]),
-                include_target=True,
                 modify=self.modify,
                 normalize=self.normalize,
                 transforms=self.transforms,
@@ -45,8 +43,7 @@ class StainNormalizationPredict(MetaTiledSlides[PredictSample]):
         modify: Transform3D,
         normalize: Transform3D | None = None, 
         transforms: Transform3D | None = None,
-
-    ) -> None:        
+    ) -> None:
         self.modify = modify
         self.normalize = normalize
         self.transforms = transforms
@@ -54,10 +51,9 @@ class StainNormalizationPredict(MetaTiledSlides[PredictSample]):
 
     def generate_datasets(self) -> Iterable[Dataset[PredictSample]]:
         return (
-            _StainNormalizationSlideTiles(
+            _StainNormalizationPredictSlideTiles(
                 slide,
                 tiles=self.filter_tiles_by_slide(slide["id"]),
-                include_target=False,
                 modify=self.modify,
                 normalize=self.normalize,
                 transforms=self.transforms,
@@ -66,12 +62,11 @@ class StainNormalizationPredict(MetaTiledSlides[PredictSample]):
         )
 
 
-class _StainNormalizationSlideTiles(Dataset[Sample | PredictSample]):
+class _StainNormalizationTrainSlideTiles(Dataset[Sample]):
     def __init__(
         self,
         slide_metadata: pd.Series,
         tiles: pd.DataFrame,
-        include_target: bool,
         modify: Transform3D,
         normalize: Transform3D | None = None,  
         transforms: Transform3D | None = None,
@@ -87,17 +82,62 @@ class _StainNormalizationSlideTiles(Dataset[Sample | PredictSample]):
         self.modify = modify
         self.normalize = normalize
         self.transforms = transforms
-        self.include_target = include_target
         self.to_tensor = ToTensorV2()
 
     def __len__(self) -> int:
         return len(self.slide_tiles)
 
-    def __getitem__(self, idx: int) -> Sample | PredictSample:
-        original_image_255 = self.slide_tiles[idx]
-        # This is not distruptive transform as rotate, flip 
+    def __getitem__(self, idx: int) -> Sample:
+        original_image = self.slide_tiles[idx]
+        # Apply non-disruptive transformations such as rotation, flip
         if self.transforms is not None:
-            original_image_255 = self.transforms(image=original_image)["image"]
+            original_image = self.transforms(image=original_image)["image"]
+
+        # Create "wrong" image to use as input. Outputs image in float 0-1
+        modified_image = self.modify(image=original_image)["image"]
+        original_image = original_image / 255.0 
+
+        if self.normalize:
+            original_image = self.normalize(image=original_image)["image"]
+            modified_image = self.normalize(image=modified_image)["image"]
+
+        original_image = self.to_tensor(image=original_image)["image"]
+        modified_image = self.to_tensor(image=modified_image)["image"]
+        
+        return modified_image, original_image
+        
+
+
+class _StainNormalizationPredictSlideTiles(Dataset[PredictSample]):
+    def __init__(
+        self,
+        slide_metadata: pd.Series,
+        tiles: pd.DataFrame,
+        modify: Transform3D,
+        normalize: Transform3D | None = None,  
+        transforms: Transform3D | None = None,
+    ) -> None:
+        super().__init__()
+        self.slide_tiles = OpenSlideTilesDataset(
+            slide_path=slide_metadata.path,
+            level=slide_metadata.level,
+            tile_extent_x=slide_metadata.tile_extent_x,
+            tile_extent_y=slide_metadata.tile_extent_y,
+            tiles=tiles,
+        )
+        self.modify = modify
+        self.normalize = normalize
+        self.transforms = transforms
+        self.to_tensor = ToTensorV2()
+
+    def __len__(self) -> int:
+        return len(self.slide_tiles)
+
+    def __getitem__(self, idx: int) -> PredictSample:
+        original_image_255 = self.slide_tiles[idx]
+        # Apply non-disruptive transformations such as rotation, flip
+        if self.transforms is not None:
+            original_image_255 = self.transforms(image=original_image_255)["image"]
 
         # Create "wrong" image to use as input. Outputs image in float 0-1
         modified_image_raw = self.modify(image=original_image_255)["image"]
@@ -112,7 +152,5 @@ class _StainNormalizationSlideTiles(Dataset[Sample | PredictSample]):
         modified_image = self.to_tensor(image=modified_image)["image"]
         
         
-        if self.include_target:
-            return modified_image, original_image
-        
-        return modified_image, {"original_image":original_image_255, "modified_image":modified_image_raw,"index":idx} 
+        return modified_image, {"original_image": original_image_255, "modified_image": modified_image_raw, "index": idx}
+
