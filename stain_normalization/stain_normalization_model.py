@@ -48,7 +48,8 @@ class StainNormalizationModel(LightningModule):
         self.log_dict(
             self.val_metrics,
             batch_size=len(inputs),
-            on_epoch=True,
+            on_epoch=False, 
+            on_step=True
         )
         
 
