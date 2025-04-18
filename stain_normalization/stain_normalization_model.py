@@ -1,7 +1,7 @@
 from lightning import LightningModule
 from torch import Tensor, nn
 from torch.optim.optimizer import Optimizer
-from stain_normalization.modeling import L1SSIMLoss
+from stain_normalization.modeling import L1SSIMLoss, UNet
 from stain_normalization.typing import Input, Outputs
 from torch.optim import Adam
 from torch.optim.optimizer import Optimizer 
@@ -12,22 +12,20 @@ from typing import Any
 class StainNormalizationModel(LightningModule):
     def __init__(self, backbone: nn.Module, decode_head: nn.Module) -> None:
         super().__init__()
-        self.backbone = backbone
-        self.decode_head = decode_head
+        self.unet = UNet(in_channels=3,out_channels=3)
         self.criterion = L1SSIMLoss() 
 
         self.val_metrics = MetricCollection(
             {
                 "ssim": StructuralSimilarityIndexMeasure(),
-                "psnr": PeakSignalNoiseRatio()
+                # "psnr": PeakSignalNoiseRatio()
             }
         )  
         self.test_metrics = self.val_metrics.clone(prefix="test/")
         self.val_metrics.prefix = "validation/"
 
     def forward(self, x: Input) -> Outputs:
-        features = self.backbone(x)
-        return self.decode_head(features)
+        return self.unet(x)
 
     def training_step(self, batch: Input) -> Tensor:
         inputs, targets = batch
@@ -43,7 +41,7 @@ class StainNormalizationModel(LightningModule):
         outputs = self(inputs)
 
         loss = self.criterion(outputs, targets)
-        self.log("validation/loss", loss, on_step=False, on_epoch=True)
+        self.log("validation/loss", loss, on_step=False, on_epoch=True, logger=True)
         self.val_metrics.update(outputs, targets)
         self.log_dict(
             self.val_metrics,
