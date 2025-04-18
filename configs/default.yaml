@@ -17,7 +17,7 @@ trainer:
   enable_checkpointing: True
   max_epochs: 30
   log_every_n_steps: 5
-  val_check_interval: 0.25
+  val_check_interval: 0.5
   callbacks:
     - _target_: lightning.pytorch.callbacks.ModelCheckpoint
       save_top_k: 1
@@ -26,12 +26,12 @@ trainer:
 
 data:
   batch_size: 128
-  num_workers: 8
+  num_workers: 6
 
 metadata:
   user: xlopatka
   experiment_name: Stain-Normalization
-  run_name: Third Train Stain Normalization
+  run_name: Unet Train Stain Normalization
   description: Testing Stain Normalization
   hyperparams: {}
 
