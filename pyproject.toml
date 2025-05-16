@@ -1,7 +1,7 @@
 [project]
 name = "Stain Normalization"
 version = "0.1.0"
-authors = ["Adam Lopatka"]
+authors = [{name = "Adam Lopatka"}]
 requires-python = ">=3.11"
 readme = "README.md"
 license = { file = "LICENSE" }
