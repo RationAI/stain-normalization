@@ -1,13 +1,15 @@
+from typing import Any
+
 from lightning import LightningModule
-from torch import Tensor, nn, stack
+from torch import Tensor, stack
+from torch.optim import Adam
 from torch.optim.optimizer import Optimizer
+from torchmetrics import MetricCollection
+from torchmetrics.image import StructuralSimilarityIndexMeasure
+
 from stain_normalization.modeling import L1SSIMLoss, UNet
 from stain_normalization.typing import Input, Outputs
-from torch.optim import Adam
-from torch.optim.optimizer import Optimizer 
-from torchmetrics.image import StructuralSimilarityIndexMeasure
-from torchmetrics import  MetricCollection
-from typing import Any
+
 
 class StainNormalizationModel(LightningModule):
     def __init__(self) -> None:

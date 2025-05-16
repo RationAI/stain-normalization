@@ -1,11 +1,12 @@
+from pathlib import Path
+
 import mlflow
+import numpy as np
 import pandas as pd
 import torch
-from pathlib import Path
 from lightning import Callback, LightningModule, Trainer
-import numpy as np
-from skimage.metrics import structural_similarity as ssim
 from rationai.staining import estimate_stain_vectors
+from skimage.metrics import structural_similarity as ssim
 
 
 class AnalysisExport(Callback):
@@ -91,7 +92,7 @@ def on_test_batch_end(
         for name, vec, nmi in zip(
             ["original", "modified", "predicted"],
             [vec_original, vec_modified, vec_predicted],
-            [nmi_original, nmi_modified, nmi_predicted]
+            [nmi_original, nmi_modified, nmi_predicted], strict=False
         ):
             vectors = vec.flatten()
             for j, val in enumerate(vectors):

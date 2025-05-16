@@ -1,6 +1,5 @@
 import numpy as np
 from albumentations import ImageOnlyTransform
-from skimage.color import separate_stains, combine_stains, hed_from_rgb, rgb_from_hed
 
 
 class ExposureAdjustment(ImageOnlyTransform):

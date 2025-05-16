@@ -2,7 +2,7 @@
 
 import numpy as np
 from albumentations import ImageOnlyTransform
-from skimage.color import rgb2hsv, hsv2rgb
+from skimage.color import hsv2rgb, rgb2hsv
 
 
 class HVSModification(ImageOnlyTransform):

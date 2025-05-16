@@ -1,6 +1,5 @@
 from collections.abc import Iterable
 
-import numpy as np
 import pandas as pd
 from albumentations import Transform3D
 from albumentations.pytorch import ToTensorV2

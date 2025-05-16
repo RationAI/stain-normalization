@@ -1,4 +1,5 @@
 from pathlib import Path
+
 import mlflow
 import ray
 from rationai.tiling import tiling
@@ -98,7 +99,7 @@ def main() -> None:
     test_slides_df.to_csv("./data/datasets/test_slides.csv", index=False)
     test_tiles_df.to_csv("./data/datasets/test_tiles.csv", index=False)
 
-    mlflow.set_experiment(experiment_name="Stain Normalization")
+    mlflow.set_experiment(experiment_name="Stain-Normalization")
     with mlflow.start_run(run_name="Stain Normalization Dataset") as _:
         save_mlflow_dataset(
             slides=train_slides_df,

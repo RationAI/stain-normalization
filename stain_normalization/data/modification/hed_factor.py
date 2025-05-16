@@ -1,6 +1,7 @@
 import numpy as np
 from albumentations import ImageOnlyTransform
-from skimage.color import separate_stains, combine_stains, hed_from_rgb, rgb_from_hed
+from skimage.color import combine_stains, hed_from_rgb, rgb_from_hed, separate_stains
+
 
 class HEDFactor(ImageOnlyTransform):
     def __init__(self, 

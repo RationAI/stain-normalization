@@ -1,8 +1,9 @@
-from typing import TypeAlias, TypedDict,  Dict, Any
+from typing import Any, TypeAlias
 
 from torch import Tensor
 
-PredictSample: TypeAlias = tuple[Tensor, Dict[str, Any]]
+
+PredictSample: TypeAlias = tuple[Tensor, dict[str, Any]]
 Sample: TypeAlias = tuple[Tensor, Tensor]
 
 Input: TypeAlias = Sample

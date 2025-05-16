@@ -1,8 +1,9 @@
 from pathlib import Path
-from lightning import Callback, LightningModule, Trainer
-from PIL import Image
-from omegaconf import DictConfig
+
 import torch
+from lightning import Callback, LightningModule, Trainer
+from omegaconf import DictConfig
+from PIL import Image
 
 
 class TilesExport(Callback):

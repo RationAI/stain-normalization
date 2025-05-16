@@ -1,14 +1,14 @@
-from typing import Any
 from collections.abc import Iterable
-from torch import Tensor
+from typing import Any
 
 from hydra.utils import instantiate
 from lightning import LightningDataModule
 from omegaconf import DictConfig
+from torch import Tensor
 from torch.utils.data import DataLoader
 
-from stain_normalization.typing import Input
 from stain_normalization.data.utils import collate_fn
+from stain_normalization.typing import Input
 
 
 class DataModule(LightningDataModule):

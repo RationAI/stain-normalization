@@ -1,8 +1,9 @@
-from lightning.pytorch.callbacks import Callback
 from pathlib import Path
+
 import torch
-from PIL import Image
+from lightning.pytorch.callbacks import Callback
 from omegaconf import DictConfig
+from PIL import Image
 
 
 class SaveWSI(Callback):

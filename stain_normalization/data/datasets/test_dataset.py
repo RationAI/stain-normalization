@@ -1,13 +1,13 @@
 from collections.abc import Iterable
 
-import numpy as np
 import pandas as pd
 from albumentations import Transform3D
 from albumentations.pytorch import ToTensorV2
 from rationai.mlkit.data.datasets import MetaTiledSlides, OpenSlideTilesDataset
 from torch.utils.data import Dataset
 
-from stain_normalization.typing import PredictSample, Sample
+from stain_normalization.typing import PredictSample
+
 
 class TestDataset(MetaTiledSlides[PredictSample]):
     def __init__(

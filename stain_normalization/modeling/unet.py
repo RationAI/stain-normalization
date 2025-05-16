@@ -1,5 +1,4 @@
-"""
-Model created using segmentation_models_pytorch library:
+"""Model created using segmentation_models_pytorch library:
 # Adapted U-Net implementation based on https://github.com/milesial/Pytorch-UNet
 
 Ronneberger, O., Fischer, P., & Brox, T. (2015). 
@@ -11,6 +10,7 @@ Retrieved from https://arxiv.org/abs/1505.04597.
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+
 
 class DoubleConv(nn.Module):
     """(convolution => [BN] => ReLU) * 2"""

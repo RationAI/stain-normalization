@@ -1,9 +1,9 @@
 from pathlib import Path
+
 import pyvips
 import ray
 from openslide import PROPERTY_NAME_MPP_X, PROPERTY_NAME_MPP_Y, OpenSlide
-from rationai.masks import tissue_mask, write_big_tiff
-from rationai.masks import process_items
+from rationai.masks import process_items, tissue_mask, write_big_tiff
 
 
 # folders:
