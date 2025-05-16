@@ -3,5 +3,4 @@ from stain_normalization.callbacks.save_wsi import SaveWSI
 from stain_normalization.callbacks.tiles_export import TilesExport
 
 
-__all__ = ["AnalysisExport", "SaveWSI", "TileExport"]
-
+__all__ = ["AnalysisExport", "SaveWSI", "TilesExport"]

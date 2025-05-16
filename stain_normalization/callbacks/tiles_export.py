@@ -7,7 +7,9 @@ from PIL import Image
 
 
 class TilesExport(Callback):
-    def __init__(self, output_dir: str | Path, normalization_config: DictConfig) -> None:
+    def __init__(
+        self, output_dir: str | Path, normalization_config: DictConfig
+    ) -> None:
         super().__init__()
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(parents=True, exist_ok=True)
@@ -15,19 +17,19 @@ class TilesExport(Callback):
         normalization = normalization_config
         self.mean = torch.tensor(normalization.mean).view(3, 1, 1)
         self.std = torch.tensor(normalization.std).view(3, 1, 1)
-    
+
     def denormalize(self, tensor: torch.Tensor) -> torch.Tensor:
         device = tensor.device
         std = self.std.to(device)
         mean = self.mean.to(device)
         return (tensor * std) + mean
-        
+
     def tensor_to_image(self, tensor: torch.Tensor) -> Image.Image:
-        tensor = self.denormalize(tensor)  
-        tensor = tensor.clamp(0, 1)  
+        tensor = self.denormalize(tensor)
+        tensor = tensor.clamp(0, 1)
         tensor = (tensor * 255).byte()
-        return Image.fromarray(tensor.permute(1, 2, 0).cpu().numpy())  
-    
+        return Image.fromarray(tensor.permute(1, 2, 0).cpu().numpy())
+
     def on_test_batch_end(
         self,
         trainer: Trainer,
@@ -62,9 +64,13 @@ class TilesExport(Callback):
             predicted_image.save(self.output_dir / f"{name}.png")
 
             if not is_predict:
-                original_image = Image.fromarray(data[b]["original_image"].astype("uint8"))
+                original_image = Image.fromarray(
+                    data[b]["original_image"].astype("uint8")
+                )
                 original_image.save(self.output_dir / f"{name}_original.png")
 
                 if "modified_image" in data[b]:
-                    modified_image = Image.fromarray((data[b]["modified_image"] * 255).astype("uint8"))
+                    modified_image = Image.fromarray(
+                        (data[b]["modified_image"] * 255).astype("uint8")
+                    )
                     modified_image.save(self.output_dir / f"{name}_modified.png")

@@ -9,5 +9,3 @@ Sample: TypeAlias = tuple[Tensor, Tensor]
 Input: TypeAlias = Sample
 
 Outputs: TypeAlias = Tensor
-
-

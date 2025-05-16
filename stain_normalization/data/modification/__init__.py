@@ -8,5 +8,9 @@ from stain_normalization.data.transformation.hed_factor import HEDFactor
 from stain_normalization.data.transformation.hvs_modification import HVSModification
 
 
-__all__ = ["CombinedModifications", "ExposureAdjustment", "HEDFactor", "HVSModification"]
-
+__all__ = [
+    "CombinedModifications",
+    "ExposureAdjustment",
+    "HEDFactor",
+    "HVSModification",
+]

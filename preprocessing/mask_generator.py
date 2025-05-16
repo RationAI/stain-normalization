@@ -24,10 +24,8 @@ def process_slide(slide_path: Path) -> None:
     # extract proper spatial resulution based on desired level using OpenSlide
     with OpenSlide(slide_path) as slide:
         downsample = slide.level_downsamples[LEVEL]
-        xres = 1000 / \
-            (float(slide.properties[PROPERTY_NAME_MPP_X]) * downsample)
-        yres = 1000 / \
-            (float(slide.properties[PROPERTY_NAME_MPP_Y]) * downsample)
+        xres = 1000 / (float(slide.properties[PROPERTY_NAME_MPP_X]) * downsample)
+        yres = 1000 / (float(slide.properties[PROPERTY_NAME_MPP_Y]) * downsample)
 
     slide = pyvips.Image.new_from_file(slide_path, level=LEVEL)
     mask = tissue_mask(slide)
@@ -37,10 +35,45 @@ def process_slide(slide_path: Path) -> None:
 
 
 BROKEN_SLIDES = {
-    'P-2016_3829-04-1.mrxs', 'P-2016_3732-06-1.mrxs', 'P-2016_3732-03-1.mrxs', 'P-2016_3760-06-1.mrxs', 'P-2016_3629-13-1.mrxs', 'P-2016_3926-03-1.mrxs',
-    'P-2016_3852-02-1.mrxs', 'P-2016_3988-07-1.mrxs', 'P-2016_3852-01-1.mrxs',
-    'P-2016_3851-02-1.mrxs', 'P-2016_3629-12-1.mrxs', 'P-2016_3667-10-0.mrxs', 'P-2016_3606-04-1.mrxs', 'P-2016_3597-10-1.mrxs', 'P-2016_3988-10-1.mrxs', 'P-2016_3829-01-1.mrxs', 'P-2016_3926-02-1.mrxs', 'P-2019_3025-03-1.mrxs',
-    'P-2016_3760-04-1.mrxs', 'P-2016_3732-04-1.mrxs', 'P-2016_3667-09-1.mrxs', 'P-2019_3292-06-1.mrxs', 'P-2016_3988-02-1.mrxs', 'P-2016_3667-11-0.mrxs', 'P-2016_3606-05-1.mrxs', 'P-2016_3851-09-1.mrxs', 'P-2016_3627-09-1.mrxs', 'P-2016_3606-03-1.mrxs', 'P-2016_3627-10-1.mrxs', 'P-2016_3852-03-1.mrxs', 'P-2016_3851-07-1.mrxs', 'P-2016_3829-03-1.mrxs', 'P-2016_3627-06-1.mrxs', 'P-2016_3597-09-1.mrxs', 'P-2016_3926-01-1.mrxs', 'P-2016_3629-11-1.mrxs', 'P-2016_3760-03-1.mrxs'}
+    "P-2016_3829-04-1.mrxs",
+    "P-2016_3732-06-1.mrxs",
+    "P-2016_3732-03-1.mrxs",
+    "P-2016_3760-06-1.mrxs",
+    "P-2016_3629-13-1.mrxs",
+    "P-2016_3926-03-1.mrxs",
+    "P-2016_3852-02-1.mrxs",
+    "P-2016_3988-07-1.mrxs",
+    "P-2016_3852-01-1.mrxs",
+    "P-2016_3851-02-1.mrxs",
+    "P-2016_3629-12-1.mrxs",
+    "P-2016_3667-10-0.mrxs",
+    "P-2016_3606-04-1.mrxs",
+    "P-2016_3597-10-1.mrxs",
+    "P-2016_3988-10-1.mrxs",
+    "P-2016_3829-01-1.mrxs",
+    "P-2016_3926-02-1.mrxs",
+    "P-2019_3025-03-1.mrxs",
+    "P-2016_3760-04-1.mrxs",
+    "P-2016_3732-04-1.mrxs",
+    "P-2016_3667-09-1.mrxs",
+    "P-2019_3292-06-1.mrxs",
+    "P-2016_3988-02-1.mrxs",
+    "P-2016_3667-11-0.mrxs",
+    "P-2016_3606-05-1.mrxs",
+    "P-2016_3851-09-1.mrxs",
+    "P-2016_3627-09-1.mrxs",
+    "P-2016_3606-03-1.mrxs",
+    "P-2016_3627-10-1.mrxs",
+    "P-2016_3852-03-1.mrxs",
+    "P-2016_3851-07-1.mrxs",
+    "P-2016_3829-03-1.mrxs",
+    "P-2016_3627-06-1.mrxs",
+    "P-2016_3597-09-1.mrxs",
+    "P-2016_3926-01-1.mrxs",
+    "P-2016_3629-11-1.mrxs",
+    "P-2016_3760-03-1.mrxs",
+}
+
 
 def main() -> None:
     folders = [
@@ -49,7 +82,7 @@ def main() -> None:
         # "Prospective negative cases", #DONE
         # "Prospective test cases", # DONE
         # "Prospective tumor cases" # DONE
-        ]
+    ]
 
     for folder in folders:
         slides = []

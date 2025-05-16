@@ -52,16 +52,16 @@ class DataModule(LightningDataModule):
 
     def test_dataloader(self) -> Iterable[Input]:
         return DataLoader(
-            self.test, 
-            batch_size=self.batch_size, 
+            self.test,
+            batch_size=self.batch_size,
             num_workers=self.num_workers,
             collate_fn=collate_fn,
         )
 
     def predict_dataloader(self) -> Iterable[tuple[Tensor, list[dict[str, Any]]]]:
         return DataLoader(
-            self.predict, 
-            batch_size=self.batch_size, 
+            self.predict,
+            batch_size=self.batch_size,
             num_workers=self.num_workers,
             collate_fn=collate_fn,
         )

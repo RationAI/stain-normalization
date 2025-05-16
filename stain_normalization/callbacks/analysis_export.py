@@ -40,12 +40,13 @@ class AnalysisExport(Callback):
     def _compute_ssim(self, img1: np.ndarray, img2: np.ndarray) -> float:
         return float(ssim(img1, img2, channel_axis=-1, data_range=255))
 
-    def _compute_nmi(self, img: np.ndarray): # normalized median intensity
+    def _compute_nmi(self, img: np.ndarray):  # normalized median intensity
         avg_rgb = img.mean(axis=2)
         median_val = np.median(avg_rgb)
         p95_val = np.percentile(avg_rgb, 95)
         nmi = median_val / p95_val if p95_val != 0 else 0
         return nmi
+
 
 def on_test_batch_end(
     self,
@@ -73,7 +74,6 @@ def on_test_batch_end(
         ssim_mod = self._compute_ssim(original_np, modified_np)
         ssim_pred = self._compute_ssim(original_np, predicted_np)
 
-        
         nmi_original = self.compute_nmi(original_np)
         nmi_modified = self.compute_nmi(modified_np)
         nmi_predicted = self.compute_nmi(predicted_np)
@@ -92,15 +92,20 @@ def on_test_batch_end(
         for name, vec, nmi in zip(
             ["original", "modified", "predicted"],
             [vec_original, vec_modified, vec_predicted],
-            [nmi_original, nmi_modified, nmi_predicted], strict=False
+            [nmi_original, nmi_modified, nmi_predicted],
+            strict=False,
         ):
             vectors = vec.flatten()
             for j, val in enumerate(vectors):
                 raw_row[f"{name}_vec_{j}"] = val
             raw_row[f"{name}_nmi"] = nmi
 
-        self.df_diff = pd.concat([self.df_diff, pd.DataFrame([diff_row])], ignore_index=True)
-        self.df_raw = pd.concat([self.df_raw, pd.DataFrame([raw_row])], ignore_index=True)
+        self.df_diff = pd.concat(
+            [self.df_diff, pd.DataFrame([diff_row])], ignore_index=True
+        )
+        self.df_raw = pd.concat(
+            [self.df_raw, pd.DataFrame([raw_row])], ignore_index=True
+        )
 
     def on_predict_end(
         self,

@@ -14,7 +14,7 @@ class TestDataset(MetaTiledSlides[PredictSample]):
         self,
         uris: Iterable[str],
         modify: Transform3D,
-        normalize: Transform3D | None = None, 
+        normalize: Transform3D | None = None,
     ) -> None:
         self.modify = modify
         self.normalize = normalize
@@ -38,7 +38,7 @@ class _TestSlideTiles(Dataset[PredictSample]):
         slide_metadata: pd.Series,
         tiles: pd.DataFrame,
         modify: Transform3D,
-        normalize: Transform3D | None = None,  
+        normalize: Transform3D | None = None,
     ) -> None:
         super().__init__()
         self.slide_tiles = OpenSlideTilesDataset(
@@ -61,7 +61,7 @@ class _TestSlideTiles(Dataset[PredictSample]):
         # Create "wrong" image to use as input. Outputs image in float 0-1
         modified_image_raw = self.modify(image=original_image_255)["image"]
         modified_image = modified_image_raw
-        original_image = original_image_255 / 255.0 
+        original_image = original_image_255 / 255.0
 
         if self.normalize:
             original_image = self.normalize(image=original_image)["image"]
@@ -69,12 +69,13 @@ class _TestSlideTiles(Dataset[PredictSample]):
 
         original_image = self.to_tensor(image=original_image)["image"]
         modified_image = self.to_tensor(image=modified_image)["image"]
-        
-        
-        return (modified_image, 
-        {"original_image_tensor":original_image, 
-        "original_image": original_image_255, 
-        "modified_image": modified_image_raw, 
-        "index": idx}
-        )
 
+        return (
+            modified_image,
+            {
+                "original_image_tensor": original_image,
+                "original_image": original_image_255,
+                "modified_image": modified_image_raw,
+                "index": idx,
+            },
+        )

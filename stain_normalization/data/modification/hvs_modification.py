@@ -1,5 +1,3 @@
-
-
 import numpy as np
 from albumentations import ImageOnlyTransform
 from skimage.color import hsv2rgb, rgb2hsv
@@ -12,9 +10,8 @@ class HVSModification(ImageOnlyTransform):
         saturation_range: tuple[float, float] = (0.8, 1.5),
         value_range: tuple[float, float] = (0.8, 1.3),
         always_apply: bool = True,
-        p: float = 1.0
+        p: float = 1.0,
     ):
-
         super().__init__(always_apply, p)
         self.hue_shift_range = hue_shift_range
         self.saturation_range = saturation_range

@@ -56,20 +56,56 @@ def handler(slide_path: Path) -> TiledSlideMetadata:
 
     return slide, tiles
 
+
 BROKEN_SLIDES = {
-    'P-2016_3829-04-1.mrxs', 'P-2016_3732-06-1.mrxs', 'P-2016_3732-03-1.mrxs', 'P-2016_3760-06-1.mrxs', 'P-2016_3629-13-1.mrxs', 'P-2016_3926-03-1.mrxs',
-    'P-2016_3852-02-1.mrxs', 'P-2016_3988-07-1.mrxs', 'P-2016_3852-01-1.mrxs',
-    'P-2016_3851-02-1.mrxs', 'P-2016_3629-12-1.mrxs', 'P-2016_3667-10-0.mrxs', 'P-2016_3606-04-1.mrxs', 'P-2016_3597-10-1.mrxs', 'P-2016_3988-10-1.mrxs', 'P-2016_3829-01-1.mrxs', 'P-2016_3926-02-1.mrxs', 'P-2019_3025-03-1.mrxs',
-    'P-2016_3760-04-1.mrxs', 'P-2016_3732-04-1.mrxs', 'P-2016_3667-09-1.mrxs', 'P-2019_3292-06-1.mrxs', 'P-2016_3988-02-1.mrxs', 'P-2016_3667-11-0.mrxs', 'P-2016_3606-05-1.mrxs', 'P-2016_3851-09-1.mrxs', 'P-2016_3627-09-1.mrxs', 'P-2016_3606-03-1.mrxs', 'P-2016_3627-10-1.mrxs', 'P-2016_3852-03-1.mrxs', 'P-2016_3851-07-1.mrxs', 'P-2016_3829-03-1.mrxs', 'P-2016_3627-06-1.mrxs', 'P-2016_3597-09-1.mrxs', 'P-2016_3926-01-1.mrxs', 'P-2016_3629-11-1.mrxs', 'P-2016_3760-03-1.mrxs'}
+    "P-2016_3829-04-1.mrxs",
+    "P-2016_3732-06-1.mrxs",
+    "P-2016_3732-03-1.mrxs",
+    "P-2016_3760-06-1.mrxs",
+    "P-2016_3629-13-1.mrxs",
+    "P-2016_3926-03-1.mrxs",
+    "P-2016_3852-02-1.mrxs",
+    "P-2016_3988-07-1.mrxs",
+    "P-2016_3852-01-1.mrxs",
+    "P-2016_3851-02-1.mrxs",
+    "P-2016_3629-12-1.mrxs",
+    "P-2016_3667-10-0.mrxs",
+    "P-2016_3606-04-1.mrxs",
+    "P-2016_3597-10-1.mrxs",
+    "P-2016_3988-10-1.mrxs",
+    "P-2016_3829-01-1.mrxs",
+    "P-2016_3926-02-1.mrxs",
+    "P-2019_3025-03-1.mrxs",
+    "P-2016_3760-04-1.mrxs",
+    "P-2016_3732-04-1.mrxs",
+    "P-2016_3667-09-1.mrxs",
+    "P-2019_3292-06-1.mrxs",
+    "P-2016_3988-02-1.mrxs",
+    "P-2016_3667-11-0.mrxs",
+    "P-2016_3606-05-1.mrxs",
+    "P-2016_3851-09-1.mrxs",
+    "P-2016_3627-09-1.mrxs",
+    "P-2016_3606-03-1.mrxs",
+    "P-2016_3627-10-1.mrxs",
+    "P-2016_3852-03-1.mrxs",
+    "P-2016_3851-07-1.mrxs",
+    "P-2016_3829-03-1.mrxs",
+    "P-2016_3627-06-1.mrxs",
+    "P-2016_3597-09-1.mrxs",
+    "P-2016_3926-01-1.mrxs",
+    "P-2016_3629-11-1.mrxs",
+    "P-2016_3760-03-1.mrxs",
+}
+
 
 def main() -> None:
     folders = [
         "archive tumor cases",
-        "archive negative cases", 
-        "Prospective negative cases", 
-        "Prospective test cases", 
-        "Prospective tumor cases" 
-        ]
+        "archive negative cases",
+        "Prospective negative cases",
+        "Prospective test cases",
+        "Prospective tumor cases",
+    ]
 
     slides = []
     for folder in folders:
@@ -78,18 +114,13 @@ def main() -> None:
                 continue
             slides.append(slide)
 
-    slides, test_slides = train_test_split(
-        slides, test_size=0.2
-    )
+    slides, test_slides = train_test_split(slides, test_size=0.2)
     train_slides, val_slides = train_test_split(slides, test_size=0.1)
 
-    train_slides_df, train_tiles_df = tiling(
-        slides=train_slides, handler=handler)
-    val_slides_df, val_tiles_df = tiling(
-        slides=list(val_slides), handler=handler)
-    test_slides_df, test_tiles_df = tiling(
-        slides=list(test_slides), handler=handler)
-    
+    train_slides_df, train_tiles_df = tiling(slides=train_slides, handler=handler)
+    val_slides_df, val_tiles_df = tiling(slides=list(val_slides), handler=handler)
+    test_slides_df, test_tiles_df = tiling(slides=list(test_slides), handler=handler)
+
     train_slides_df.to_csv("./data/datasets/train_slides.csv", index=False)
     train_tiles_df.to_csv("./data/datasets/train_tiles.csv", index=False)
 
@@ -107,7 +138,9 @@ def main() -> None:
             dataset_name="Stain Normalization - train",
         )
         save_mlflow_dataset(
-            slides=val_slides_df, tiles=val_tiles_df, dataset_name="Stain Normalization - val"
+            slides=val_slides_df,
+            tiles=val_tiles_df,
+            dataset_name="Stain Normalization - val",
         )
         save_mlflow_dataset(
             slides=test_slides_df,

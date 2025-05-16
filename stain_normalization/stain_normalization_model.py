@@ -14,14 +14,14 @@ from stain_normalization.typing import Input, Outputs
 class StainNormalizationModel(LightningModule):
     def __init__(self) -> None:
         super().__init__()
-        self.unet = UNet(in_channels=3,out_channels=3)
-        self.criterion = L1SSIMLoss() 
+        self.unet = UNet(in_channels=3, out_channels=3)
+        self.criterion = L1SSIMLoss()
 
         self.val_metrics = MetricCollection(
             {
                 "ssim": StructuralSimilarityIndexMeasure(),
             }
-        )  
+        )
         self.test_metrics = self.val_metrics.clone(prefix="test/")
         self.val_metrics.prefix = "validation/"
 
@@ -53,13 +53,13 @@ class StainNormalizationModel(LightningModule):
     def test_step(self, batch: Input) -> Outputs:
         inputs, data = batch
         outputs = self(inputs)
-        targets = stack([item['original_image_tensor'] for item in data])
+        targets = stack([item["original_image_tensor"] for item in data])
         self.test_metrics.update(outputs, targets)
         self.log_dict(
             self.test_metrics,
             batch_size=len(inputs),
             on_epoch=True,
-        )    
+        )
         return outputs
 
     def predict_step(self, batch: tuple[Tensor, Any], batch_idx: int) -> Outputs:

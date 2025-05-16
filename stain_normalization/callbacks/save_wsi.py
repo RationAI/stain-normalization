@@ -7,7 +7,9 @@ from PIL import Image
 
 
 class SaveWSI(Callback):
-    def __init__(self, output_dir: str | Path, normalization_config: DictConfig) -> None:
+    def __init__(
+        self, output_dir: str | Path, normalization_config: DictConfig
+    ) -> None:
         super().__init__()
         self.output_root = Path(output_dir)
         self.mean = torch.tensor(normalization_config.mean).view(3, 1, 1)
@@ -28,15 +30,14 @@ class SaveWSI(Callback):
         batch_idx: int,
         dataloader_idx: int = 0,
     ) -> None:
-        
         for b in range(len(outputs)):
             predicted_image = outputs[b]
             metadata = batch[1][b]
-    
+
             slide_name = metadata["slide_name"]
             level = metadata["level"]
             original_image = Image.fromarray(metadata["original_image"].astype("uint8"))
-            filename = f'{metadata["xy"]}.png'
+            filename = f"{metadata['xy']}.png"
 
             base_folder = self.output_root / str(slide_name) / str(level)
             predicted_folder = base_folder / "predicted"
@@ -49,5 +50,7 @@ class SaveWSI(Callback):
 
             predicted_image = self.denormalize(predicted_image).clamp(0, 1)
             predicted_image = (predicted_image * 255).byte()
-            predicted_image = Image.fromarray(predicted_image.permute(1, 2, 0).cpu().numpy())
+            predicted_image = Image.fromarray(
+                predicted_image.permute(1, 2, 0).cpu().numpy()
+            )
             predicted_image.save(predicted_folder / filename)

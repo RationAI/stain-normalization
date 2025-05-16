@@ -13,7 +13,7 @@ class PredictDataset(MetaTiledSlides[PredictSample]):
     def __init__(
         self,
         uris: Iterable[str],
-        normalize: Transform3D | None = None, 
+        normalize: Transform3D | None = None,
     ) -> None:
         self.normalize = normalize
         super().__init__(uris=uris)
@@ -34,7 +34,7 @@ class _PredictSlideTiles(Dataset[PredictSample]):
         self,
         slide_metadata: pd.Series,
         tiles: pd.DataFrame,
-        normalize: Transform3D | None = None,  
+        normalize: Transform3D | None = None,
     ) -> None:
         super().__init__()
         self.slide_tiles = OpenSlideTilesDataset(
@@ -44,7 +44,7 @@ class _PredictSlideTiles(Dataset[PredictSample]):
             tile_extent_y=slide_metadata.tile_extent_y,
             tiles=tiles,
         )
-        
+
         self.normalize = normalize
         self.to_tensor = ToTensorV2()
 
@@ -58,19 +58,19 @@ class _PredictSlideTiles(Dataset[PredictSample]):
         x = self.slide_tiles.tiles.iloc[idx]["x"]
         y = self.slide_tiles.tiles.iloc[idx]["y"]
 
-        input_image = input_image_255 / 255.0 
+        input_image = input_image_255 / 255.0
 
         if self.normalize:
             input_image = self.normalize(image=input_image)["image"]
-        
+
         input_image = self.to_tensor(image=input_image)["image"]
 
-        return input_image, {"original_image": input_image_255, 
-        "modified_image": None, 
-        "slide_name": slide_name, 
-        "level":level ,
-        "index": idx, 
-        "xy":f"{x}_{y}",
-        "name":f"{slide_name}-{x}-{y}"}
-
-
+        return input_image, {
+            "original_image": input_image_255,
+            "modified_image": None,
+            "slide_name": slide_name,
+            "level": level,
+            "index": idx,
+            "xy": f"{x}_{y}",
+            "name": f"{slide_name}-{x}-{y}",
+        }
