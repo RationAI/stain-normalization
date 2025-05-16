@@ -9,13 +9,8 @@ class ExposureAdjustment(ImageOnlyTransform):
         self.brightness_range = brightness_range
 
     def apply(self, img, **params):
-        hed_img = separate_stains(img, hed_from_rgb)
-
         brightness_factor = np.random.uniform(*self.brightness_range)
-        h, e, d = hed_img[:, :, 0], hed_img[:, :, 1], hed_img[:, :, 2]
-        h = np.clip(h * brightness_factor, 0, 1)
-        e = np.clip(e * brightness_factor, 0, 1)
-        d = np.clip(d * brightness_factor, 0, 1)
+        img = img.astype(np.float32)
+        img = np.clip(img*brightness_factor, 0.0, 1.0)
         
-        modified_rgb = combine_stains(np.stack((h, e, d), axis=-1), rgb_from_hed)
-        return modified_rgb
+        return img

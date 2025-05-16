@@ -12,8 +12,8 @@ class L1SSIMLoss(nn.Module):
         self.lambda_gdl = lambda_gdl
 
     def forward(self, image: torch.Tensor, target_image: torch.Tensor) -> torch.Tensor:
-        Ll1 = F.l1_loss(image, target_image, reduction='mean')  # L1 loss
-        ssim_loss = 1.0 - ssim(image, target_image)  # SSIM loss
+        Ll1 = F.l1_loss(image, target_image, reduction='mean') 
+        ssim_loss = 1.0 - ssim(image, target_image)  
 
         gdl_loss = gradient_loss(image, target_image)  # GDL for sharp edges
 

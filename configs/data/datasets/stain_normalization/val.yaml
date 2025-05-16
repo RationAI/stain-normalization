@@ -1,8 +1,7 @@
 defaults:
-  # - /data/transforms@transforms: test
   - /data/modify@modify: train
   - /data/normalize@normalize: default
   
-_target_: stain_normalization.data.datasets.StainNormalization
+_target_: stain_normalization.data.datasets.TrainDataset
 uris: ["mlflow-artifacts:/79/bc7dfc2258164cd292091c3056609277/artifacts/Stain Normalization - val"]
 

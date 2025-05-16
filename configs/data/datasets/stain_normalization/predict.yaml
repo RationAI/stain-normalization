@@ -1,7 +1,5 @@
 defaults:
-  # - /data/transforms@transforms: test
-  - /data/modify@modify: test
   - /data/normalize@normalize: default
 
-_target_: stain_normalization.data.datasets.StainNormalizationPredict
-uris: ["mlflow-artifacts:"]
+_target_: stain_normalization.data.datasets.PredictDataset
+uris: ["mlflow-artifacts:/79/ce91ce61ac8e4b4784b76a7193e59da9/artifacts/FNBrno_400/2"]

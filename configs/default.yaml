@@ -5,37 +5,46 @@ defaults:
   - /data/datasets@data.val: stain_normalization/val
   - /data/datasets@data.test: stain_normalization/test
   - /data/datasets@data.predict: stain_normalization/predict
-  - /model/backbone: resnet50
-  - /model/decode_head: unet2048
   - _self_
 
 seed: ${random_seed:}
-mode: ???
-checkpoint: null
+mode: predict
+checkpoint: mlflow-artifacts:/79/f75808f6e14344bb814e5c0659321054/artifacts/checkpoints/epoch=5-step=86273/checkpoint.ckpt
 
 trainer:
   enable_checkpointing: True
   max_epochs: 30
   log_every_n_steps: 5
-  val_check_interval: 0.5
   callbacks:
     - _target_: lightning.pytorch.callbacks.ModelCheckpoint
       save_top_k: 1
       monitor: validation/loss
       mode: min
+    - _target_: stain_normalization.callbacks.TilesExport
+      output_dir: ${output_dir}
+      normalization_config: ${data.test.normalize}
+
+    - _target_: stain_normalization.callbacks.AnalysisExport
+      output_dir: ${output_dir}
+      normalization_config: ${data.test.normalize}
+
+    - _target_: stain_normalization.callbacks.SaveWSI
+      output_dir: ${output_dir}
+      normalization_config: ${data.predict.normalize}
 
 data:
-  batch_size: 64
-  num_workers: 6
+  batch_size: 64 
+  num_workers: 32 
 
 metadata:
   user: xlopatka
   experiment_name: Stain-Normalization
-  run_name: Unet Train Stain Normalization
-  description: Testing Stain Normalization
+  run_name: Debuging
+  description: Stain Normalization
   hyperparams: {}
 
-output_dir: ./data
+
+output_dir: ./data/test-dataset
 
 
 

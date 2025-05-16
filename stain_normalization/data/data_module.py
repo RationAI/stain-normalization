@@ -30,7 +30,6 @@ class DataModule(LightningDataModule):
             case "test":
                 self.test = instantiate(self.datasets["test"])
             case "predict":
-                # this need predict val is for debuging only
                 self.predict = instantiate(self.datasets["predict"])
 
     def train_dataloader(self) -> Iterable[Input]:
@@ -53,7 +52,10 @@ class DataModule(LightningDataModule):
 
     def test_dataloader(self) -> Iterable[Input]:
         return DataLoader(
-            self.test, batch_size=self.batch_size, num_workers=self.num_workers
+            self.test, 
+            batch_size=self.batch_size, 
+            num_workers=self.num_workers,
+            collate_fn=collate_fn,
         )
 
     def predict_dataloader(self) -> Iterable[tuple[Tensor, list[dict[str, Any]]]]:

@@ -1,16 +1,16 @@
 from lightning import LightningModule
-from torch import Tensor, nn
+from torch import Tensor, nn, stack
 from torch.optim.optimizer import Optimizer
 from stain_normalization.modeling import L1SSIMLoss, UNet
 from stain_normalization.typing import Input, Outputs
 from torch.optim import Adam
 from torch.optim.optimizer import Optimizer 
-from torchmetrics.image import PeakSignalNoiseRatio,StructuralSimilarityIndexMeasure
+from torchmetrics.image import StructuralSimilarityIndexMeasure
 from torchmetrics import  MetricCollection
 from typing import Any
 
 class StainNormalizationModel(LightningModule):
-    def __init__(self, backbone: nn.Module, decode_head: nn.Module) -> None:
+    def __init__(self) -> None:
         super().__init__()
         self.unet = UNet(in_channels=3,out_channels=3)
         self.criterion = L1SSIMLoss() 
@@ -18,7 +18,6 @@ class StainNormalizationModel(LightningModule):
         self.val_metrics = MetricCollection(
             {
                 "ssim": StructuralSimilarityIndexMeasure(),
-                # "psnr": PeakSignalNoiseRatio()
             }
         )  
         self.test_metrics = self.val_metrics.clone(prefix="test/")
@@ -49,17 +48,19 @@ class StainNormalizationModel(LightningModule):
             on_epoch=True,
         )
 
-    def test_step(self, batch: Input) -> None:
-        inputs, targets = batch
+    def test_step(self, batch: Input) -> Outputs:
+        inputs, data = batch
         outputs = self(inputs)
+        targets = stack([item['original_image_tensor'] for item in data])
         self.test_metrics.update(outputs, targets)
         self.log_dict(
             self.test_metrics,
             batch_size=len(inputs),
             on_epoch=True,
         )    
+        return outputs
 
-    def predict_step(self, batch: tuple[Tensor, Any], batch_idx: int, dataloader_idx: int = 0) -> Outputs:
+    def predict_step(self, batch: tuple[Tensor, Any], batch_idx: int) -> Outputs:
         inputs = batch[0]
         return self(inputs)
 
