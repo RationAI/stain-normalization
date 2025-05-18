@@ -11,30 +11,41 @@ seed: ${random_seed:}
 mode: predict
 checkpoint: mlflow-artifacts:/79/f75808f6e14344bb814e5c0659321054/artifacts/checkpoints/epoch=5-step=86273/checkpoint.ckpt
 
+
+callbacks:
+  model_checkpoint:
+    _target_: lightning.pytorch.callbacks.ModelCheckpoint
+    save_top_k: 1
+    monitor: validation/loss
+    mode: min
+
+  tiles_export:
+    _target_: stain_normalization.callbacks.TilesExport
+    output_dir: ${output_dir}
+    normalization_config: ${data.test.normalize}
+
+  analysis_export:
+    _target_: stain_normalization.callbacks.AnalysisExport
+    output_dir: ${output_dir}
+    normalization_config: ${data.test.normalize}
+
+  save_wsi:
+    _target_: stain_normalization.callbacks.SaveWSI
+    output_dir: ${output_dir}
+    normalization_config: ${data.predict.normalize}
+
 trainer:
   enable_checkpointing: True
   max_epochs: 30
   log_every_n_steps: 5
   callbacks:
-    - _target_: lightning.pytorch.callbacks.ModelCheckpoint
-      save_top_k: 1
-      monitor: validation/loss
-      mode: min
-    - _target_: stain_normalization.callbacks.TilesExport
-      output_dir: ${output_dir}
-      normalization_config: ${data.test.normalize}
+    - ${callbacks.model_checkpoint}
+    - ${callbacks.tiles_export}
 
-    - _target_: stain_normalization.callbacks.AnalysisExport
-      output_dir: ${output_dir}
-      normalization_config: ${data.test.normalize}
-
-    - _target_: stain_normalization.callbacks.SaveWSI
-      output_dir: ${output_dir}
-      normalization_config: ${data.predict.normalize}
 
 data:
   batch_size: 64 
-  num_workers: 32 
+  num_workers: 48 
 
 metadata:
   user: xlopatka
