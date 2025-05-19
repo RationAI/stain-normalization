@@ -37,12 +37,8 @@ class CombinedModifications(ImageOnlyTransform):
             Modified RGB image as a float32 NumPy array with values in [0.0, 1.0].
         """
         hed_image = separate_stains(img, hed_from_rgb)
-        h = self.modify_channel(
-            hed_image[:, :, 0], self.intensity_range, self.brightness_range
-        )
-        e = self.modify_channel(
-            hed_image[:, :, 1], self.intensity_range, self.brightness_range
-        )
+        h = self.modify_channel(hed_image[:, :, 0])
+        e = self.modify_channel(hed_image[:, :, 1])
         d = hed_image[:, :, 2]
 
         modified_rgb = combine_stains(np.stack((h, e, d), axis=-1), rgb_from_hed)

@@ -33,7 +33,7 @@ class HEDFactor(ImageOnlyTransform):
             params: Additional parameters.
 
         Returns:
-            RGB image with modified Hematoxylin and Eosin channels 
+            RGB image with modified Hematoxylin and Eosin channels
             as a float32 NumPy array with values in [0.0, 1.].
         """
         h_factor = np.random.uniform(*self.h_range)

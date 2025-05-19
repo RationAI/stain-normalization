@@ -38,7 +38,7 @@ class HVSModification(ImageOnlyTransform):
             params: Additional parameters.
 
         Returns:
-            RGB image with HVS modifiedications as a float32 
+            RGB image with HVS modifiedications as a float32
             NumPy array with values in [0.0, 1.].
         """
         hue_shift = np.random.uniform(*self.hue_shift_range)

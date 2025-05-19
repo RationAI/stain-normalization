@@ -31,7 +31,7 @@ class ExposureAdjustment(ImageOnlyTransform):
             params: Additional parameters.
 
         Returns:
-            RGB image with adjusted brightness as a float32 
+            RGB image with adjusted brightness as a float32
             NumPy array with values in [0.0, 1.].
         """
         brightness_factor = np.random.uniform(*self.brightness_range)
