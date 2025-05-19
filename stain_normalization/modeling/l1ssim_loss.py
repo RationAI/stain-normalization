@@ -1,3 +1,8 @@
+"""Original SSIM code based on pytorch-ssim by Evan Su (MIT License).
+
+https://github.com/Po-Hsun-Su/pytorch-ssim .
+"""
+
 from math import exp
 
 import torch

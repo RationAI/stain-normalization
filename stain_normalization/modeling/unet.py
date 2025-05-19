@@ -1,10 +1,11 @@
-"""Model created using segmentation_models_pytorch library.
+"""Adapted U-Net implementation based on the GitHub repository.
 
-Adapted U-Net implementation based on https://github.com/milesial/Pytorch-UNet
+https://github.com/milesial/Pytorch-UNet .
+Original U-Net architecture proposed in the paper.
 Ronneberger, O., Fischer, P., & Brox, T. (2015).
 U-Net: Convolutional Networks for Biomedical Image Segmentation.
 arXiv:1505.04597 [cs.CV].
-Retrieved from https://arxiv.org/abs/1505.04597.
+Retrieved from https://arxiv.org/abs/1505.04597 .
 """
 
 import torch
@@ -63,14 +64,10 @@ class Up(nn.Module):
 
     def forward(self, x1, x2):
         x1 = self.up(x1)
-        # input is CHW
         diffy = x2.size()[2] - x1.size()[2]
         diffx = x2.size()[3] - x1.size()[3]
 
         x1 = F.pad(x1, [diffx // 2, diffx - diffx // 2, diffy // 2, diffy - diffy // 2])
-        # if you have padding issues, see
-        # https://github.com/HaiyongJiang/U-Net-Pytorch-Unstructured-Buggy/commit/0e854509c2cea854e247a9c615f175f76fbb2e3a
-        # https://github.com/xiaopeng-liao/Pytorch-UNet/commit/8ebac70e633bac59fc22bb5195e513d5832fb3bd
         x = torch.cat([x2, x1], dim=1)
         return self.conv(x)
 
