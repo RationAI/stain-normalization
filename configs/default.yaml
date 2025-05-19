@@ -8,7 +8,7 @@ defaults:
   - _self_
 
 seed: ${random_seed:}
-mode: predict
+mode: test
 checkpoint: mlflow-artifacts:/79/f75808f6e14344bb814e5c0659321054/artifacts/checkpoints/epoch=5-step=86273/checkpoint.ckpt
 
 
@@ -40,12 +40,12 @@ trainer:
   log_every_n_steps: 5
   callbacks:
     - ${callbacks.model_checkpoint}
-    - ${callbacks.tiles_export}
+    - ${callbacks.analysis_export}
 
 
 data:
-  batch_size: 64 
-  num_workers: 48 
+  batch_size: 80
+  num_workers: 8
 
 metadata:
   user: xlopatka

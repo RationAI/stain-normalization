@@ -1,11 +1,11 @@
-from stain_normalization.data.transformation.combiend_modification import (
+from stain_normalization.data.modification.combiend_modification import (
     CombinedModifications,
 )
-from stain_normalization.data.transformation.exposure_adjustment import (
+from stain_normalization.data.modification.exposure_adjustment import (
     ExposureAdjustment,
 )
-from stain_normalization.data.transformation.hed_factor import HEDFactor
-from stain_normalization.data.transformation.hvs_modification import HVSModification
+from stain_normalization.data.modification.hed_factor import HEDFactor
+from stain_normalization.data.modification.hvs_modification import HVSModification
 
 
 __all__ = [
