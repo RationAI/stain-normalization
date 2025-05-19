@@ -17,7 +17,7 @@ dependencies = [
     "rationai-tiling @ git+https://gitlab.ics.muni.cz/rationai/digital-pathology/libraries/tiling.git",
     "scikit-image>=0.25.2",
     "openslide-bin>=4.0.0.6",
-    "rationai-staining @ git+ssh://git@gitlab.ics.muni.cz/rationai/digital-pathology/libraries/staining.git"
+    "rationai-staining @ git+https://git@gitlab.ics.muni.cz/rationai/digital-pathology/libraries/staining.git",
 ]
 
 [tool.pdm.dev-dependencies]

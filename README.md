@@ -1,42 +1,34 @@
 # Stain Normalization
-export MLFLOW_TRACKING_USERNAME=<YOUR_USERNAME>
 
+Tento repozitár slúži ako doplnkový materiál k bakalárskej práci **"Normalizácia farbenia histopatologických snímkov pomocou neuronových sietí"**.
 
+Celý kód nie je možné spustiť samostatne, pretože vyžaduje prístup k citlivým dátam a k platforme na správu strojového učenia MLflow. Avšak je možné spustiť demo, ku ktorému je pripravených pár vzoriek na demonštráciu.
 
-[![PyTorch Lightning](https://img.shields.io/badge/pytorch-lightning-blue.svg?logo=PyTorch%20Lightning)](https://github.com/Lightning-AI/lightning)
-[![License](https://img.shields.io/badge/License-MIT-red.svg)](https://gitlab.ics.muni.cz/rationai/digital-pathology/pathology/patch-camelyon/-/blob/master/LICENSE)
+## Demo
 
+Demo skript umožňuje načítať jeden obrázok alebo celý priečinok, normalizovať ich pomocou predtrénovaného modelu a uložiť výsledné obrázky do určeného priečinka.
 
-The main goal ...
+## Priložené dáta
 
+- **Originálne obrázky** (v priečinku `./demo_data/original`) – referenčné vzorky.  
+- **Upravené obrázky** (v priečinku `./demo_data/modified`) – referenčné obrázky s modifikovaným sfarbením, ktoré sa následne modelom znormalizujú späť k originálnemu vzhľadu.  
+- **Obrázky z iného datasetu** (v priečinku `./demo_data/to_predict`) – ukazujú, ako model dokáže prispôsobiť farby vstupov tak, aby zodpovedali farebnému štýlu trénovacích dát.  
+- **Model checkpoint** 
 
-## Getting Started
+## Spustenie dema
 
-### Installation
+Projekt je spravovaný pomocou nástroja **pdm**, ktorý umožňuje jednoduchú správu závislostí a prostredia. Stačí nainštalovať závislosti pomocou:
 
-Install [PDM](https://pdm.fming.dev/) package manager and install all the dependencies using the following command:
 ```bash
 pdm install
 ```
-
-### Preprocessing
-
-```bash
-export MLFLOW_TRACKING_USERNAME=<YOUR_USERNAME>
-pdm run preprocessing/generate_tissue_mask.py
-pdm run preprocessing/tiling.py
-```
-
-### Training
+a potom spustiť demo skript:
 
 ```bash
-export MLFLOW_TRACKING_USERNAME=<YOUR_USERNAME>
-pdm fit model/backbone=(vgg16|resnet18)
+pdm run python demo.py --input ./demo_data/modified
 ```
 
-### Testing
-
-```bash
-export MLFLOW_TRACKING_USERNAME=<YOUR_USERNAME>
-pdm test model/backbone=(vgg16|resnet18) 'checkpoint="<CHECKPOINT_PATH>"'
-```
+## Dostupné arguemnty:
+- **input**: cesta k obrázku alebo priečinku s obrázkami na normalizáciu (default ./demo_data/modified)
+- **output**: priečinok, kam sa uložia normalizované obrázky (default ./demo_data)
+- **use_cpu**: defaultne nadstavené na použitie GPU ak je dostupná, avšak ak by nastali problémy odporúčam použivať iba CPU
