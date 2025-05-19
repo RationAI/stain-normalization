@@ -133,7 +133,6 @@ class AnalysisExport(Callback):
         self,
         trainer: Trainer,
         pl_module: LightningModule,
-        outputs: list,
     ) -> None:
         """Called at the end of testing.
 
