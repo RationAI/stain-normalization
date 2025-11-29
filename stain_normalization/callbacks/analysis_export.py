@@ -7,6 +7,8 @@ import torch
 from lightning import Callback, LightningModule, Trainer
 from rationai.staining import estimate_stain_vectors
 from skimage.metrics import structural_similarity as ssim
+from skimage.color import rgb2lab
+from skimage.metrics import peak_signal_noise_ratio
 
 
 class AnalysisExport(Callback):
@@ -60,6 +62,17 @@ class AnalysisExport(Callback):
             return 0.0
 
         return float(np.corrcoef(img1_flat, img2_flat)[0, 1])
+        
+    def _compute_lab_brightness_psnr(self, img1: np.ndarray, img2: np.ndarray) -> float:
+        """Compute PSNR on the L (lightness) channel in Lab color space.
+        """
+        lab1 = rgb2lab(img1.astype(np.float32) / 255.0)
+        lab2 = rgb2lab(img2.astype(np.float32) / 255.0)
+
+        L1 = lab1[:, :, 0]
+        L2 = lab2[:, :, 0]
+
+        return float(peak_signal_noise_ratio(L1, L2, data_range=100.0))
 
     def on_test_batch_end(
         self,
@@ -97,6 +110,9 @@ class AnalysisExport(Callback):
 
             pcc_mod = self._compute_pcc(original_img, modified_img)
             pcc_pred = self._compute_pcc(original_img, predicted_img)
+            
+            lab_psnr_mod = self._compute_lab_brightness_psnr(original_img, modified_img)
+            lab_psnr_pred = self._compute_lab_brightness_psnr(original_img, predicted_img)
 
             diff_row = {
                 "index": index,
@@ -108,6 +124,8 @@ class AnalysisExport(Callback):
                 "nmi_diff_predicted_vs_original": nmi_predicted - nmi_original,
                 "pcc_modified_vs_original": pcc_mod,
                 "pcc_predicted_vs_original": pcc_pred,
+                "lab_brightness_psnr_mod_vs_orig": lab_psnr_mod,
+                "lab_brightness_psnr_pred_vs_orig": lab_psnr_pred,
             }
 
             raw_row = {"index": index}

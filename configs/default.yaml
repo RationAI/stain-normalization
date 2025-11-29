@@ -8,14 +8,14 @@ defaults:
   - _self_
 
 seed: ${random_seed:}
-mode: test
-checkpoint: mlflow-artifacts:/79/f75808f6e14344bb814e5c0659321054/artifacts/checkpoints/epoch=5-step=86273/checkpoint.ckpt
+mode: fit
+checkpoint: null
 
 
 callbacks:
   model_checkpoint:
     _target_: lightning.pytorch.callbacks.ModelCheckpoint
-    save_top_k: 1
+    save_top_k: 2
     monitor: validation/loss
     mode: min
 
@@ -38,19 +38,20 @@ trainer:
   enable_checkpointing: True
   max_epochs: 30
   log_every_n_steps: 5
+  val_check_interval: 0.5
+
   callbacks:
     - ${callbacks.model_checkpoint}
     - ${callbacks.analysis_export}
 
-
 data:
-  batch_size: 80
+  batch_size: 16
   num_workers: 8
 
 metadata:
   user: xlopatka
   experiment_name: Stain-Normalization
-  run_name: Debuging
+  run_name: fit bright
   description: Stain Normalization
   hyperparams: {}
 

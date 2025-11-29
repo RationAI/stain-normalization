@@ -20,6 +20,8 @@ class StainNormalizationModel(LightningModule):
         self.val_metrics = MetricCollection(
             {
                 "ssim": StructuralSimilarityIndexMeasure(),
+                "l1": MeanAbsoluteError()
+
             }
         )
         self.test_metrics = self.val_metrics.clone(prefix="test/")

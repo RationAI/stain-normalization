@@ -3,7 +3,13 @@
 https://github.com/Po-Hsun-Su/pytorch-ssim .
 """
 
+"""
+The SSIM is based on implementation from gaussian-splatting and slightly simplified (pre-computed windows and removal of unused arguments)
+https://github.com/graphdeco-inria/gaussian-splatting/blob/472689c0dc70417448fb451bf529ae532d32c095/utils/loss_utils.py
+"""
+
 from math import exp
+
 
 import torch
 import torch.nn as nn
@@ -12,25 +18,91 @@ from torch.autograd import Variable
 
 
 class L1SSIMLoss(nn.Module):
-    def __init__(self, lambda_dssim: float = 0.6, lambda_gdl: float = 0.2):
+    def __init__(self, lambda_dssim: float = 0.6, lambda_l1: float = 0.35, lambda_lum: float = 0.35, lambda_gdl: float = 0.15):
         super().__init__()
-        self.lambda_dssim = lambda_dssim
-        self.lambda_gdl = lambda_gdl
+        self.lambda_dssim = lambda_dssim  
+        self.lambda_l1 = lambda_l1        
+        self.lambda_lum = lambda_lum      
+        self.lambda_gdl = lambda_gdl      
+
+        # precompute SSIM windows to avoid repetation
+        self.window_size = 11
+        self.channel = 3
+        self._1d_window = gaussian(self.window_size, 1.5).unsqueeze(1)
+        self._2d_window = self._1d_window.mm(self._1d_window.t()).float().unsqueeze(0).unsqueeze(0)
+        self.window = self._2d_window.expand(self.channel, 1, self.window_size, self.window_size).contiguous()
 
     def forward(self, image: torch.Tensor, target_image: torch.Tensor) -> torch.Tensor:
-        l1 = F.l1_loss(image, target_image, reduction="mean")
-        ssim_loss = 1.0 - ssim(image, target_image)
+        if self.window.device != image.device:
+            self.window = self.window.to(image.device)
+        # L1 color loss
+        l1_loss = F.l1_loss(image, target_image, reduction="mean")
+        
+        # SSIM structural loss
+        ssim_loss = 1.0 - self._ssim(image, target_image, self.window)
+        
+        # Gradient loss for edges
+        gdl_loss = gradient_loss(image, target_image)
+        
+        # Luminance / brightness loss
+        lum_loss = luminance_loss(image, target_image)
 
-        gdl_loss = gradient_loss(image, target_image)  # GDL for sharp edges
-
+        # total weighted loss
         total_loss = (
-            (1.0 - self.lambda_dssim) * l1
+            self.lambda_l1 * l1_loss
             + self.lambda_dssim * ssim_loss
             + self.lambda_gdl * gdl_loss
+            + self.lambda_lum * lum_loss
         )
-
+        
         return total_loss
 
+    @torch.compile
+    def _ssim(self, img1, img2, window):
+        # Modified _ssim that uses pre-computed window
+        mu1 = F.conv2d(img1, window, padding=self.window_size // 2, groups=self.channel)
+        mu2 = F.conv2d(img2, window, padding=self.window_size // 2, groups=self.channel)
+            
+        mu1_sq = mu1.pow(2)
+        mu2_sq = mu2.pow(2)
+        mu1_mu2 = mu1 * mu2
+            
+        sigma1_sq = F.conv2d(img1 * img1, window, padding=self.window_size // 2, groups=self.channel) - mu1_sq
+        sigma2_sq = F.conv2d(img2 * img2, window, padding=self.window_size // 2, groups=self.channel) - mu2_sq
+        sigma12 = F.conv2d(img1 * img2, window, padding=self.window_size // 2, groups=self.channel) - mu1_mu2
+            
+        c1 = 0.01**2
+        c2 = 0.03**2
+            
+        ssim_map = ((2 * mu1_mu2 + c1) * (2 * sigma12 + c2)) / (
+            (mu1_sq + mu2_sq + c1) * (sigma1_sq + sigma2_sq + c2)
+        )
+            
+        return ssim_map.mean()
+
+
+def gaussian(window_size, sigma):
+    gauss = torch.Tensor(
+        [
+            exp(-((x - window_size // 2) ** 2) / float(2 * sigma**2))
+            for x in range(window_size)
+        ]
+    )
+    return gauss / gauss.sum()
+
+
+def luminance_loss(
+    pred: torch.Tensor, 
+    target: torch.Tensor, 
+    he_weights=[0.4, 0.1, 0.5]) -> torch.Tensor:
+    device = pred.device
+    weights = torch.tensor(he_weights, device=device).view(1, 3, 1, 1)
+
+    lum_pred = (pred * weights).sum(dim=1, keepdim=True)
+    lum_target = (target * weights).sum(dim=1, keepdim=True)
+
+    lum_loss = F.l1_loss(lum_pred, lum_target)
+    return lum_loss
 
 def gradient_loss(image, target_image):
     def gradient(x):
@@ -47,63 +119,6 @@ def gradient_loss(image, target_image):
     return loss_x + loss_y
 
 
-def gaussian(window_size, sigma):
-    gauss = torch.Tensor(
-        [
-            exp(-((x - window_size // 2) ** 2) / float(2 * sigma**2))
-            for x in range(window_size)
-        ]
-    )
-    return gauss / gauss.sum()
 
 
-def create_window(window_size, channel):
-    _1d_window = gaussian(window_size, 1.5).unsqueeze(1)
-    _2d_window = _1d_window.mm(_1d_window.t()).float().unsqueeze(0).unsqueeze(0)
-    window = Variable(
-        _2d_window.expand(channel, 1, window_size, window_size).contiguous()
-    )
-    return window
 
-
-def ssim(img1, img2, window_size=11, size_average=True):
-    channel = img1.size(-3)
-    window = create_window(window_size, channel)
-
-    if img1.is_cuda:
-        window = window.cuda(img1.get_device())
-    window = window.type_as(img1)
-
-    return _ssim(img1, img2, window, window_size, channel, size_average)
-
-
-def _ssim(img1, img2, window, window_size, channel, size_average=True):
-    mu1 = F.conv2d(img1, window, padding=window_size // 2, groups=channel)
-    mu2 = F.conv2d(img2, window, padding=window_size // 2, groups=channel)
-
-    mu1_sq = mu1.pow(2)
-    mu2_sq = mu2.pow(2)
-    mu1_mu2 = mu1 * mu2
-
-    sigma1_sq = (
-        F.conv2d(img1 * img1, window, padding=window_size // 2, groups=channel) - mu1_sq
-    )
-    sigma2_sq = (
-        F.conv2d(img2 * img2, window, padding=window_size // 2, groups=channel) - mu2_sq
-    )
-    sigma12 = (
-        F.conv2d(img1 * img2, window, padding=window_size // 2, groups=channel)
-        - mu1_mu2
-    )
-
-    c1 = 0.01**2
-    c2 = 0.03**2
-
-    ssim_map = ((2 * mu1_mu2 + c1) * (2 * sigma12 + c2)) / (
-        (mu1_sq + mu2_sq + c1) * (sigma1_sq + sigma2_sq + c2)
-    )
-
-    if size_average:
-        return ssim_map.mean()
-    else:
-        return ssim_map.mean(1).mean(1).mean(1)

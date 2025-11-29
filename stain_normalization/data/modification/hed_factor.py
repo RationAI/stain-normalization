@@ -40,9 +40,9 @@ class HEDFactor(ImageOnlyTransform):
         e_factor = np.random.uniform(*self.e_range)
 
         hed_image = separate_stains(img, hed_from_rgb)
-        h = hed_image[:, :, 0] * h_factor
-        e = hed_image[:, :, 1] * e_factor
-        d = hed_image[:, :, 2]
+        h = np.clip(hed_image[:, :, 0] * h_factor, 0, 1)
+        e = np.clip(hed_image[:, :, 1] * e_factor, 0, 1)
+        d = hed_image[:, :, 2]  # DAB channel unchanged
         modified_rgb = combine_stains(np.stack((h, e, d), axis=-1), rgb_from_hed)
 
         return modified_rgb
