@@ -45,9 +45,9 @@ trainer:
     - ${callbacks.analysis_export}
 
 data:
-  batch_size: 16
-  num_workers: 8
-
+  batch_size: 64
+  num_workers: 10
+  
 metadata:
   user: xlopatka
   experiment_name: Stain-Normalization
