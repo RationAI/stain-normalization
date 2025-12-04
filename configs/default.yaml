@@ -45,7 +45,7 @@ trainer:
     - ${callbacks.analysis_export}
 
 data:
-  batch_size: 64
+  batch_size: 32
   num_workers: 10
   
 metadata:
