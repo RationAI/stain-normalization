@@ -6,6 +6,7 @@ from torch.optim import Adam
 from torch.optim.optimizer import Optimizer
 from torchmetrics import MetricCollection
 from torchmetrics.image import StructuralSimilarityIndexMeasure
+from torchmetrics.regression import MeanAbsoluteError
 
 from stain_normalization.modeling import L1SSIMLoss, UNet
 from stain_normalization.typing import Input, Outputs
