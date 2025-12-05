@@ -18,7 +18,7 @@ from torch.autograd import Variable
 
 
 class L1SSIMLoss(nn.Module):
-    def __init__(self, lambda_dssim: float = 0.6, lambda_l1: float = 0.35, lambda_lum: float = 0.35, lambda_gdl: float = 0.15):
+    def __init__(self, lambda_dssim: float = 0.6, lambda_l1: float = 0.2, lambda_lum: float = 0.2, lambda_gdl: float = 0.1):
         super().__init__()
         self.lambda_dssim = lambda_dssim  
         self.lambda_l1 = lambda_l1        
@@ -94,7 +94,7 @@ def gaussian(window_size, sigma):
 def luminance_loss(
     pred: torch.Tensor, 
     target: torch.Tensor, 
-    he_weights=[0.4, 0.1, 0.5]) -> torch.Tensor:
+    he_weights=[0.33, 0.33, 0.33]) -> torch.Tensor:
     device = pred.device
     weights = torch.tensor(he_weights, device=device).view(1, 3, 1, 1)
 
