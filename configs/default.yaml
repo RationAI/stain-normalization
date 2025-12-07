@@ -9,7 +9,7 @@ defaults:
 
 seed: ${random_seed:}
 mode: fit
-checkpoint: null
+checkpoint: mlflow-artifacts:/79/f75808f6e14344bb814e5c0659321054/artifacts/checkpoints/epoch=5-step=86273/checkpoint.ckpt
 
 
 callbacks:
