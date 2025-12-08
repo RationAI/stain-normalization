@@ -45,7 +45,7 @@ class L1SSIMLoss(nn.Module):
         gdl_loss = gradient_loss(image, target_image)
         
         # Luminance / brightness loss
-        lum_loss = luminance_loss(image, target_image)
+        lum_loss = brightness_loss(image, target_image)
 
         # total weighted loss
         total_loss = (
@@ -104,6 +104,14 @@ def luminance_loss(
     lum_loss = F.l1_loss(lum_pred, lum_target)
     return lum_loss
 
+def brightness_loss(pred, target, he_weights=[0.33, 0.33, 0.33]):
+    weights = torch.tensor(he_weights, device=device).view(1, 3, 1)
+    
+    pred_mean = (pred * weights).mean(dim=[2, 3])  # [B, 3]
+    target_mean = (target * weights).mean(dim=[2, 3])  # [B, 3]
+    
+    return F.l1_loss(pred_mean, target_mean)
+    
 def gradient_loss(image, target_image):
     def gradient(x):
         dx = torch.abs(x[:, :, :-1, :] - x[:, :, 1:, :])  # Horizontal gradient
