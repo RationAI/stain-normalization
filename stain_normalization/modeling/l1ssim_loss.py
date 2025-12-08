@@ -106,10 +106,10 @@ def luminance_loss(
 
 def brightness_loss(pred, target, he_weights=[0.33, 0.33, 0.33]):
     device = pred.device
-    weights = torch.tensor(he_weights, device=device).view(1, 3, 1)
+    weights = torch.tensor(he_weights, device=device).view(1, 3, 1, 1)
     
-    pred_mean = (pred * weights).mean(dim=[2, 3])  # [B, 3]
-    target_mean = (target * weights).mean(dim=[2, 3])  # [B, 3]
+    pred_mean = (pred * weights).mean(dim=[2, 3], keepdim=True)
+    target_mean = (target * weights).mean(dim=[2, 3], keepdim=True) 
     
     return F.l1_loss(pred_mean, target_mean)
     
