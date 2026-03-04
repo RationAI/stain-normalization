@@ -8,14 +8,11 @@ The SSIM is based on implementation from gaussian-splatting and slightly simplif
 https://github.com/graphdeco-inria/gaussian-splatting/blob/472689c0dc70417448fb451bf529ae532d32c095/utils/loss_utils.py
 """
 
-from math import exp
-
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch.autograd import Variable
-
+from math import exp
 
 class L1SSIMLoss(nn.Module):
     def __init__(self, lambda_dssim: float = 0.6, lambda_l1: float = 0.2, lambda_lum: float = 0.2, lambda_gdl: float = 0.1):
@@ -45,14 +42,14 @@ class L1SSIMLoss(nn.Module):
         gdl_loss = gradient_loss(image, target_image)
         
         # Luminance / brightness loss
-        lum_loss = brightness_loss(image, target_image)
+        brig_loss = brightness_loss(image, target_image)
 
         # total weighted loss
         total_loss = (
             self.lambda_l1 * l1_loss
             + self.lambda_dssim * ssim_loss
             + self.lambda_gdl * gdl_loss
-            + self.lambda_lum * lum_loss
+            + self.lambda_lum * brig_loss
         )
         
         return total_loss
@@ -91,21 +88,10 @@ def gaussian(window_size, sigma):
     return gauss / gauss.sum()
 
 
-def luminance_loss(
-    pred: torch.Tensor, 
-    target: torch.Tensor, 
-    he_weights=[0.33, 0.33, 0.33]) -> torch.Tensor:
+def brightness_loss(pred, target, he_weights=None):
     device = pred.device
-    weights = torch.tensor(he_weights, device=device).view(1, 3, 1, 1)
-
-    lum_pred = (pred * weights).sum(dim=1, keepdim=True)
-    lum_target = (target * weights).sum(dim=1, keepdim=True)
-
-    lum_loss = F.l1_loss(lum_pred, lum_target)
-    return lum_loss
-
-def brightness_loss(pred, target, he_weights=[0.33, 0.33, 0.33]):
-    device = pred.device
+    if he_weights is None:
+        he_weights = [0.33, 0.33, 0.33]
     weights = torch.tensor(he_weights, device=device).view(1, 3, 1, 1)
     
     pred_mean = (pred * weights).mean(dim=[2, 3], keepdim=True)

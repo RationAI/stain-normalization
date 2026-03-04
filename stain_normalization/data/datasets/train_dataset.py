@@ -6,7 +6,7 @@ from albumentations.pytorch import ToTensorV2
 from rationai.mlkit.data.datasets import MetaTiledSlides, OpenSlideTilesDataset
 from torch.utils.data import Dataset
 
-from stain_normalization.typing import Sample
+from stain_normalization.type_aliases import Sample
 
 
 class TrainDataset(MetaTiledSlides[Sample]):

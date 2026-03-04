@@ -29,8 +29,8 @@ callbacks:
     output_dir: ${output_dir}
     normalization_config: ${data.test.normalize}
 
-  save_wsi:
-    _target_: stain_normalization.callbacks.SaveWSI
+  wsi_assembler:
+    _target_: stain_normalization.callbacks.WSIAssembler
     output_dir: ${output_dir}
     normalization_config: ${data.predict.normalize}
 

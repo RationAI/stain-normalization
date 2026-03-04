@@ -36,6 +36,8 @@ class ExposureAdjustment(ImageOnlyTransform):
         """
         brightness_factor = np.random.uniform(*self.brightness_range)
         img = img.astype(np.float32)
+        if img.max() > 1.0:
+            img = img / 255.0
         img = np.clip(img * brightness_factor, 0.0, 1.0)
 
         return img

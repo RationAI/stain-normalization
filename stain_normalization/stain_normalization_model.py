@@ -1,5 +1,3 @@
-from typing import Any
-
 from lightning import LightningModule
 from torch import Tensor, stack
 from torch.optim import Adam
@@ -9,7 +7,7 @@ from torchmetrics.image import StructuralSimilarityIndexMeasure
 from torchmetrics.regression import MeanAbsoluteError
 
 from stain_normalization.modeling import L1SSIMLoss, UNet
-from stain_normalization.typing import Input, Outputs
+from stain_normalization.type_aliases import Batch, Outputs, PredictBatch
 
 
 class StainNormalizationModel(LightningModule):
@@ -22,16 +20,15 @@ class StainNormalizationModel(LightningModule):
             {
                 "ssim": StructuralSimilarityIndexMeasure(),
                 "l1": MeanAbsoluteError()
-
             }
         )
         self.test_metrics = self.val_metrics.clone(prefix="test/")
         self.val_metrics.prefix = "validation/"
 
-    def forward(self, x: Input) -> Outputs:
+    def forward(self, x: Tensor) -> Outputs:
         return self.unet(x)
 
-    def training_step(self, batch: Input) -> Tensor:
+    def training_step(self, batch: Batch) -> Tensor:
         inputs, targets = batch
         outputs = self(inputs)
 
@@ -40,7 +37,7 @@ class StainNormalizationModel(LightningModule):
 
         return loss
 
-    def validation_step(self, batch: Input) -> None:
+    def validation_step(self, batch: Batch) -> None:
         inputs, targets = batch
         outputs = self(inputs)
 
@@ -53,7 +50,7 @@ class StainNormalizationModel(LightningModule):
             on_epoch=True,
         )
 
-    def test_step(self, batch: Input) -> Outputs:
+    def test_step(self, batch: PredictBatch) -> Outputs:
         inputs, data = batch
         outputs = self(inputs)
         targets = stack([item["original_image_tensor"] for item in data])
@@ -65,7 +62,7 @@ class StainNormalizationModel(LightningModule):
         )
         return outputs
 
-    def predict_step(self, batch: tuple[Tensor, Any], batch_idx: int) -> Outputs:
+    def predict_step(self, batch: PredictBatch, batch_idx: int) -> Outputs:
         inputs = batch[0]
         return self(inputs)
 

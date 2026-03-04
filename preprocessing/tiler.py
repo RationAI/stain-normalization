@@ -10,8 +10,9 @@ from rationai.tiling.writers import save_mlflow_dataset
 from sklearn.model_selection import train_test_split
 
 
-SLIDES_PATH = "/mnt/data/scans/AI scans/Prostata/"
-TISSUE_MASKS_PATH = "./data/tissue_masks"
+SLIDES_PATH = "/mnt/data/MOU/prostate/tile_level_annotations/"
+TISSUE_MASKS_PATH = "./mask/tissue_masks"
+TISSUE_MASKS_PATH = "/home/jovyan/staining/demo_data/masks"
 
 
 # level avg_mpp_x   avg_mpp_y
@@ -25,19 +26,20 @@ TISSUE_MASKS_PATH = "./data/tissue_masks"
 # 7     29.936095   29.994331
 # 8     59.872189   59.988661
 # 9     119.744379  119.97732
-SlideMPP = 0.46
+SlideMPP = 0.23
 
 source = OpenSlideTileSource(mpp=SlideMPP, tile_extent=512, stride=256)
 
 
-TISSUE_PERCENTAGE = 0.5
+MIN_TISSUE_PERCENTAGE = 0.0
 
 
 class TissueMask(PyvipsMask[TileMetadata]):
     def forward_tile(
         self, tile_labels: TileMetadata, class_overlaps: dict[int, float]
     ) -> TileMetadata | None:
-        if class_overlaps.get(0, 0) > TISSUE_PERCENTAGE:
+        tissue = 1.0 - class_overlaps.get(0, 0)
+        if tissue <= MIN_TISSUE_PERCENTAGE:
             return None
         return tile_labels
 
@@ -57,62 +59,11 @@ def handler(slide_path: Path) -> TiledSlideMetadata:
     return slide, tiles
 
 
-BROKEN_SLIDES = {
-    "P-2016_3829-04-1.mrxs",
-    "P-2016_3732-06-1.mrxs",
-    "P-2016_3732-03-1.mrxs",
-    "P-2016_3760-06-1.mrxs",
-    "P-2016_3629-13-1.mrxs",
-    "P-2016_3926-03-1.mrxs",
-    "P-2016_3852-02-1.mrxs",
-    "P-2016_3988-07-1.mrxs",
-    "P-2016_3852-01-1.mrxs",
-    "P-2016_3851-02-1.mrxs",
-    "P-2016_3629-12-1.mrxs",
-    "P-2016_3667-10-0.mrxs",
-    "P-2016_3606-04-1.mrxs",
-    "P-2016_3597-10-1.mrxs",
-    "P-2016_3988-10-1.mrxs",
-    "P-2016_3829-01-1.mrxs",
-    "P-2016_3926-02-1.mrxs",
-    "P-2019_3025-03-1.mrxs",
-    "P-2016_3760-04-1.mrxs",
-    "P-2016_3732-04-1.mrxs",
-    "P-2016_3667-09-1.mrxs",
-    "P-2019_3292-06-1.mrxs",
-    "P-2016_3988-02-1.mrxs",
-    "P-2016_3667-11-0.mrxs",
-    "P-2016_3606-05-1.mrxs",
-    "P-2016_3851-09-1.mrxs",
-    "P-2016_3627-09-1.mrxs",
-    "P-2016_3606-03-1.mrxs",
-    "P-2016_3627-10-1.mrxs",
-    "P-2016_3852-03-1.mrxs",
-    "P-2016_3851-07-1.mrxs",
-    "P-2016_3829-03-1.mrxs",
-    "P-2016_3627-06-1.mrxs",
-    "P-2016_3597-09-1.mrxs",
-    "P-2016_3926-01-1.mrxs",
-    "P-2016_3629-11-1.mrxs",
-    "P-2016_3760-03-1.mrxs",
-}
 
 
 def main() -> None:
-    folders = [
-        "archive tumor cases",
-        "archive negative cases",
-        "Prospective negative cases",
-        "Prospective test cases",
-        "Prospective tumor cases",
-    ]
+    slides = list(Path(SLIDES_PATH).rglob("*.mrxs"))
 
-    slides = []
-    for folder in folders:
-        for slide in Path(SLIDES_PATH, folder).rglob("*.mrxs"):
-            if slide.name in BROKEN_SLIDES:
-                continue
-            slides.append(slide)
 
     slides, test_slides = train_test_split(slides, test_size=0.2)
     train_slides, val_slides = train_test_split(slides, test_size=0.1)
@@ -150,4 +101,15 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    #main()
+    slides = [("/home/jovyan/staining/demo_data/P-2016_0077-08-1_hed_h0.6_e1.5.tiff")]
+    train_slides_df, train_tiles_df = tiling(slides=slides, handler=handler)
+
+    mlflow.set_experiment(experiment_name="Stain-Normalization")
+    with mlflow.start_run(run_name="P-2016_0077-08-1_hed all tissue tiles") as _:
+        save_mlflow_dataset(
+            slides=train_slides_df,
+            tiles=train_tiles_df,
+            dataset_name="P-2016_0077-08-1_hed",
+        )
+        

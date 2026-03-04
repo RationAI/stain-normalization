@@ -1,14 +1,12 @@
 from collections.abc import Iterable
-from typing import Any
 
 from hydra.utils import instantiate
 from lightning import LightningDataModule
 from omegaconf import DictConfig
-from torch import Tensor
 from torch.utils.data import DataLoader
 
 from stain_normalization.data.utils import collate_fn
-from stain_normalization.typing import Input
+from stain_normalization.type_aliases import Batch, PredictBatch
 
 
 class DataModule(LightningDataModule):
@@ -32,7 +30,7 @@ class DataModule(LightningDataModule):
             case "predict":
                 self.predict = instantiate(self.datasets["predict"])
 
-    def train_dataloader(self) -> Iterable[Input]:
+    def train_dataloader(self) -> Iterable[Batch]:
         return DataLoader(
             self.train,
             batch_size=self.batch_size,
@@ -42,7 +40,7 @@ class DataModule(LightningDataModule):
             persistent_workers=self.num_workers > 0,
         )
 
-    def val_dataloader(self) -> Iterable[Input]:
+    def val_dataloader(self) -> Iterable[Batch]:
         return DataLoader(
             self.val,
             batch_size=self.batch_size,
@@ -50,7 +48,7 @@ class DataModule(LightningDataModule):
             persistent_workers=self.num_workers > 0,
         )
 
-    def test_dataloader(self) -> Iterable[Input]:
+    def test_dataloader(self) -> Iterable[PredictBatch]:
         return DataLoader(
             self.test,
             batch_size=self.batch_size,
@@ -58,7 +56,7 @@ class DataModule(LightningDataModule):
             collate_fn=collate_fn,
         )
 
-    def predict_dataloader(self) -> Iterable[tuple[Tensor, list[dict[str, Any]]]]:
+    def predict_dataloader(self) -> Iterable[PredictBatch]:
         return DataLoader(
             self.predict,
             batch_size=self.batch_size,

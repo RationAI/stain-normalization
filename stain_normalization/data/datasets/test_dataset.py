@@ -6,7 +6,7 @@ from albumentations.pytorch import ToTensorV2
 from rationai.mlkit.data.datasets import MetaTiledSlides, OpenSlideTilesDataset
 from torch.utils.data import Dataset
 
-from stain_normalization.typing import PredictSample
+from stain_normalization.type_aliases import PredictSample
 
 
 class TestDataset(MetaTiledSlides[PredictSample]):
@@ -57,6 +57,9 @@ class _TestSlideTiles(Dataset[PredictSample]):
 
     def __getitem__(self, idx: int) -> PredictSample:
         original_image_255 = self.slide_tiles[idx]
+        slide_name = self.slide_tiles.slide_path.stem
+        x = self.slide_tiles.tiles.iloc[idx]["x"]
+        y = self.slide_tiles.tiles.iloc[idx]["y"]
 
         # Create "wrong" image to use as input. Outputs image in float 0-1
         modified_image_raw = self.modify(image=original_image_255)["image"]
@@ -76,6 +79,7 @@ class _TestSlideTiles(Dataset[PredictSample]):
                 "original_image_tensor": original_image,
                 "original_image": original_image_255,
                 "modified_image": modified_image_raw,
-                "index": idx,
+                "slide_name": slide_name,
+                "xy": f"{x}_{y}",
             },
         )
