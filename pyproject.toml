@@ -20,7 +20,7 @@ dependencies = [
     "rationai-staining @ git+https://git@gitlab.ics.muni.cz/rationai/digital-pathology/libraries/staining.git",
 ]
 
-[tool.pdm.dev-dependencies]
+[dependency-groups]
 dev = ["mypy", "pre-commit", "ruff"]
 
 [tool.pdm.scripts]
