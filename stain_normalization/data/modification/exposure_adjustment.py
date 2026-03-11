@@ -1,9 +1,11 @@
+from typing import Any
+
 import numpy as np
 from albumentations import ImageOnlyTransform
 from numpy.typing import NDArray
 
 
-class ExposureAdjustment(ImageOnlyTransform):
+class ExposureAdjustment(ImageOnlyTransform):  # type: ignore[misc]  # untyped import
     """Adjust the exposure of an image by scaling its brightness.
 
     Attributes:
@@ -23,7 +25,7 @@ class ExposureAdjustment(ImageOnlyTransform):
         super().__init__(always_apply, p)
         self.brightness_range = brightness_range
 
-    def apply(self, img: NDArray, **params) -> NDArray:
+    def apply(self, img: NDArray[Any], **params: Any) -> NDArray[Any]:
         """Apply brightness scaling to the image.
 
         Args:

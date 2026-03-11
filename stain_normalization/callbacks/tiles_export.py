@@ -1,11 +1,12 @@
 from pathlib import Path
+from typing import Any
 
 import torch
 from lightning import LightningModule, Trainer
 from omegaconf import DictConfig
 from PIL import Image
 
-from ._base import NormalizationCallback
+from stain_normalization.callbacks._base import NormalizationCallback
 
 
 class TilesExport(NormalizationCallback):
@@ -16,15 +17,15 @@ class TilesExport(NormalizationCallback):
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
-    def tensor_to_image(self, tensor: torch.Tensor) -> Image.Image:
+    def tensor_to_image(self, tensor: torch.Tensor) -> Image.Image:  # type: ignore[override]  # intentional: PIL Image is not subtype of ndarray
         return Image.fromarray(super().tensor_to_image(tensor))
 
-    def on_test_batch_end(
+    def on_test_batch_end(  # type: ignore[override]  # narrowed Lightning STEP_OUTPUT
         self,
         trainer: Trainer,
         pl_module: LightningModule,
         outputs: list[torch.Tensor],
-        batch: tuple[torch.Tensor, list],
+        batch: tuple[torch.Tensor, list[dict[str, Any]]],
         batch_idx: int,
         dataloader_idx: int = 0,
     ) -> None:
@@ -36,13 +37,9 @@ class TilesExport(NormalizationCallback):
             slide_dir = self.output_dir / slide_name
             slide_dir.mkdir(parents=True, exist_ok=True)
 
-            self.tensor_to_image(outputs[b]).save(
-                slide_dir / f"{xy}_predicted.png"
-            )
+            self.tensor_to_image(outputs[b]).save(slide_dir / f"{xy}_predicted.png")
 
-            original_image = Image.fromarray(
-                data[b]["original_image"].astype("uint8")
-            )
+            original_image = Image.fromarray(data[b]["original_image"].astype("uint8"))
             original_image.save(slide_dir / f"{xy}_original.png")
 
             modified_image = Image.fromarray(
@@ -55,7 +52,7 @@ class TilesExport(NormalizationCallback):
         trainer: Trainer,
         pl_module: LightningModule,
         outputs: list[torch.Tensor],
-        batch: tuple[torch.Tensor, list],
+        batch: tuple[torch.Tensor, list[dict[str, Any]]],
         batch_idx: int,
         dataloader_idx: int = 0,
     ) -> None:

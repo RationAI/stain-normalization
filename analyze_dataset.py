@@ -14,9 +14,12 @@ Usage:
 """
 
 import argparse
+from collections.abc import Generator
 from pathlib import Path
+from typing import Any
 
 import numpy as np
+import pandas as pd
 from PIL import Image
 from rationai.mlkit.data.datasets import MetaTiledSlides, OpenSlideTilesDataset
 from tqdm import tqdm
@@ -25,11 +28,13 @@ from stain_normalization.analysis import StainAnalyzer
 from stain_normalization.analysis.report import REPORT_METRICS
 
 
-def load_image(path: str | Path) -> np.ndarray:
+def load_image(path: str | Path) -> np.ndarray[Any, Any]:
     return np.array(Image.open(path).convert("RGB"))
 
 
-def iterate_tiles(slides, tiles):
+def iterate_tiles(
+    slides: pd.DataFrame, tiles: pd.DataFrame
+) -> Generator[tuple[str, Any, str], None, None]:
     """Yield (slide_name, tile_uint8, image_id) for each tile."""
     for _, slide in slides.iterrows():
         slide_name = Path(slide.path).stem
@@ -47,11 +52,13 @@ def iterate_tiles(slides, tiles):
         )
 
         for i in range(len(dataset)):
-            image_id = f"{slide_name}_{slide_tiles.iloc[i]['x']}_{slide_tiles.iloc[i]['y']}"
+            image_id = (
+                f"{slide_name}_{slide_tiles.iloc[i]['x']}_{slide_tiles.iloc[i]['y']}"
+            )
             yield slide_name, dataset[i], image_id
 
 
-def run_reference_mode(args):
+def run_reference_mode(args: argparse.Namespace) -> tuple[StainAnalyzer, int]:
     """Compare all tiles in a dataset against a single reference image."""
     ref_img = load_image(args.reference)
     slides, tiles = MetaTiledSlides.load_slides_and_tiles(paths=[], uris=args.uri)
@@ -69,10 +76,14 @@ def run_reference_mode(args):
     return analyzer, len(analyzer.results)
 
 
-def run_paired_mode(args):
+def run_paired_mode(args: argparse.Namespace) -> tuple[StainAnalyzer, int]:
     """Compare matching tiles between two datasets (original vs compared)."""
-    orig_slides, orig_tiles = MetaTiledSlides.load_slides_and_tiles(paths=[], uris=args.original)
-    comp_slides, comp_tiles = MetaTiledSlides.load_slides_and_tiles(paths=[], uris=args.compared)
+    orig_slides, orig_tiles = MetaTiledSlides.load_slides_and_tiles(
+        paths=[], uris=args.original
+    )
+    comp_slides, comp_tiles = MetaTiledSlides.load_slides_and_tiles(
+        paths=[], uris=args.compared
+    )
     print(f"Original: {len(orig_slides)} slides, {len(orig_tiles)} tiles")
     print(f"Compared: {len(comp_slides)} slides, {len(comp_tiles)} tiles")
 
@@ -86,30 +97,38 @@ def run_paired_mode(args):
     comp_iter = iterate_tiles(comp_slides, comp_tiles)
 
     for (_, orig_tile, image_id), (_, comp_tile, _) in tqdm(
-        zip(orig_iter, comp_iter), total=len(orig_tiles)
+        zip(orig_iter, comp_iter, strict=False), total=len(orig_tiles)
     ):
         analyzer.compare(comp_tile, image_id=image_id, reference=orig_tile)
 
     return analyzer, len(analyzer.results)
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser(
         description="Dataset stain analysis",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
-    parser.add_argument("--output", default="./analysis_output",
-                        help="Output directory (default: ./analysis_output)")
-    parser.add_argument("--max-tiles", type=int, default=None,
-                        help="Limit number of tiles to analyze")
+    parser.add_argument(
+        "--output",
+        default="./analysis_output",
+        help="Output directory (default: ./analysis_output)",
+    )
+    parser.add_argument(
+        "--max-tiles", type=int, default=None, help="Limit number of tiles to analyze"
+    )
 
     # Mode 1: reference image
     parser.add_argument("--reference", help="Path to reference image")
     parser.add_argument("--uri", nargs="+", help="MLflow dataset URI(s) to analyze")
 
     # Mode 2: two datasets
-    parser.add_argument("--original", nargs="+", help="MLflow URI(s) for original dataset")
-    parser.add_argument("--compared", nargs="+", help="MLflow URI(s) for compared dataset")
+    parser.add_argument(
+        "--original", nargs="+", help="MLflow URI(s) for original dataset"
+    )
+    parser.add_argument(
+        "--compared", nargs="+", help="MLflow URI(s) for compared dataset"
+    )
 
     args = parser.parse_args()
 

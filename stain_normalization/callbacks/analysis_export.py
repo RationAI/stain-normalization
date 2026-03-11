@@ -1,18 +1,21 @@
 from pathlib import Path
+from typing import Any
 
 import mlflow
 import torch
 from lightning import LightningModule, Trainer
 from omegaconf import DictConfig
 
-from ..analysis.analyzer import StainAnalyzer
-from ._base import NormalizationCallback
+from stain_normalization.analysis.analyzer import StainAnalyzer
+from stain_normalization.callbacks._base import NormalizationCallback
 
 
 class AnalysisExport(NormalizationCallback):
     """Exports analysis metrics during testing."""
 
-    def __init__(self, output_dir: str | Path, normalization_config: DictConfig) -> None:
+    def __init__(
+        self, output_dir: str | Path, normalization_config: DictConfig
+    ) -> None:
         super().__init__(normalization_config)
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(parents=True, exist_ok=True)
@@ -20,12 +23,12 @@ class AnalysisExport(NormalizationCallback):
         self.mod_analyzer = StainAnalyzer()
         self.pred_analyzer = StainAnalyzer()
 
-    def on_test_batch_end(
+    def on_test_batch_end(  # type: ignore[override]  # narrowed Lightning STEP_OUTPUT
         self,
         trainer: Trainer,
         pl_module: LightningModule,
         outputs: list[torch.Tensor],
-        batch: tuple[torch.Tensor, list[dict]],
+        batch: tuple[torch.Tensor, list[dict[str, Any]]],
         batch_idx: int,
         dataloader_idx: int = 0,
     ) -> None:

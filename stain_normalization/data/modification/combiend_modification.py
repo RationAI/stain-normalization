@@ -1,3 +1,5 @@
+from typing import Any
+
 import numpy as np
 from albumentations import ImageOnlyTransform
 from numpy.typing import NDArray
@@ -5,7 +7,7 @@ from skimage import exposure
 from skimage.color import combine_stains, hed_from_rgb, rgb_from_hed, separate_stains
 
 
-class CombinedModifications(ImageOnlyTransform):
+class CombinedModifications(ImageOnlyTransform):  # type: ignore[misc]  # untyped import
     """Apply combined modifications to the H&E channels in HED color space.
 
     Attributes:
@@ -26,7 +28,7 @@ class CombinedModifications(ImageOnlyTransform):
         self.intensity_range = intensity_range
         self.brightness_range = brightness_range
 
-    def apply(self, img: NDArray, **params) -> NDArray:
+    def apply(self, img: NDArray[Any], **params: Any) -> NDArray[Any]:
         """Apply intensity and brightness adjustments to H and E channels.
 
         Args:

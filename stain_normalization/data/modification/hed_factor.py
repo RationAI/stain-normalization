@@ -1,10 +1,12 @@
+from typing import Any
+
 import numpy as np
 from albumentations import ImageOnlyTransform
 from numpy.typing import NDArray
 from skimage.color import combine_stains, hed_from_rgb, rgb_from_hed, separate_stains
 
 
-class HEDFactor(ImageOnlyTransform):
+class HEDFactor(ImageOnlyTransform):  # type: ignore[misc]  # untyped import
     """Adjust the intensity of Hematoxylin and Eosin stains in HED color space.
 
     Attributes:
@@ -25,7 +27,7 @@ class HEDFactor(ImageOnlyTransform):
         self.h_range = h_range
         self.e_range = e_range
 
-    def apply(self, img: NDArray, **params) -> NDArray:
+    def apply(self, img: NDArray[Any], **params: Any) -> NDArray[Any]:
         """Apply the modification to the image.
 
         Args:

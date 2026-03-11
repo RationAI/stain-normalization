@@ -2,7 +2,7 @@
 name = "Stain Normalization"
 version = "0.1.0"
 authors = [{name = "Adam Lopatka"}]
-requires-python = "3.12.5"
+requires-python = "==3.12.5"
 readme = "README.md"
 license = { file = "LICENSE" }
 dependencies = [
@@ -31,10 +31,10 @@ train = "python -m stain_normalization mode=fit"
 validate = "python -m stain_normalization mode=validate"
 test = "python -m stain_normalization mode=test"
 predict = "python -m stain_normalization mode=predict"
-l = { composite = ["lint", "format", "mypy"] }
+l = { composite = ["lint", "format", "mypy_check"] }
 lint = "ruff check --fix"
 format = "ruff format"
-mypy = "mypy ."
+mypy_check = "mypy ."
 # post_install = { composite = [
 #    "pre-commit autoupdate",
 #    "pre-commit install",

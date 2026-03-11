@@ -1,9 +1,11 @@
+from typing import Any
+
 import numpy as np
 from skimage.color import rgb2lab
 from skimage.metrics import peak_signal_noise_ratio
 
 
-def compute_nmi(img: np.ndarray) -> float:
+def compute_nmi(img: np.ndarray[Any, Any]) -> float:
     """Normalized Median Intensity — measures relative brightness of an image.
 
     Args:
@@ -22,7 +24,7 @@ def compute_nmi(img: np.ndarray) -> float:
     return float(median_val / p95_val)
 
 
-def compute_pcc(img1: np.ndarray, img2: np.ndarray) -> float:
+def compute_pcc(img1: np.ndarray[Any, Any], img2: np.ndarray[Any, Any]) -> float:
     """Pearson Correlation Coefficient between two images.
 
     Args:
@@ -41,7 +43,9 @@ def compute_pcc(img1: np.ndarray, img2: np.ndarray) -> float:
     return float(np.corrcoef(img1_flat, img2_flat)[0, 1])
 
 
-def compute_lab_brightness_psnr(img1: np.ndarray, img2: np.ndarray) -> float:
+def compute_lab_brightness_psnr(
+    img1: np.ndarray[Any, Any], img2: np.ndarray[Any, Any]
+) -> float:
     """PSNR on the L* channel in Lab color space.
 
     Args:
@@ -53,4 +57,6 @@ def compute_lab_brightness_psnr(img1: np.ndarray, img2: np.ndarray) -> float:
     """
     lab1 = rgb2lab(img1.astype(np.float32) / 255.0)
     lab2 = rgb2lab(img2.astype(np.float32) / 255.0)
-    return float(peak_signal_noise_ratio(lab1[:, :, 0], lab2[:, :, 0], data_range=100.0))
+    return float(
+        peak_signal_noise_ratio(lab1[:, :, 0], lab2[:, :, 0], data_range=100.0)
+    )

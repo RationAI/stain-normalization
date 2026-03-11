@@ -34,11 +34,11 @@ def process_slide(slide_path: Path) -> None:
     write_big_tiff(mask, path=mask_path, mpp_x=xres, mpp_y=yres)
 
 
-
 def main() -> None:
     slides = list(Path(SLIDES_PATH).rglob("*.mrxs"))
     # process_slide(slides[0])
     process_items(slides, process_item=process_slide)
+
 
 if __name__ == "__main__":
     main()

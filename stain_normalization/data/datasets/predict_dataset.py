@@ -64,7 +64,7 @@ class _PredictSlideTiles(Dataset[PredictSample]):
 
         input_image = self.to_tensor(image=input_image)["image"]
 
-        return input_image, {
+        return input_image, {  # type: ignore[return-value]  # untyped import
             "slide_name": slide_name,
             "xy": f"{x}_{y}",
         }

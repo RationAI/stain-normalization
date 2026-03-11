@@ -1,3 +1,5 @@
+from typing import Any
+
 import numpy as np
 import torch
 from lightning import Callback
@@ -17,9 +19,14 @@ class NormalizationCallback(Callback):
         device = tensor.device
         return (tensor * self.std.to(device)) + self.mean.to(device)
 
-    def tensor_to_image(self, tensor: torch.Tensor) -> np.ndarray:
+    def tensor_to_image(self, tensor: torch.Tensor) -> np.ndarray[Any, Any]:
         """Convert model output tensor to uint8 HWC numpy array."""
         return (
-            self.denormalize(tensor).clamp(0, 1).mul(255).byte()
-            .permute(1, 2, 0).cpu().numpy()
+            self.denormalize(tensor)
+            .clamp(0, 1)
+            .mul(255)
+            .byte()
+            .permute(1, 2, 0)
+            .cpu()
+            .numpy()
         )

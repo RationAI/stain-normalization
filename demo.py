@@ -18,7 +18,7 @@ class StainNormalizerDemo:
     NORMALIZE_TRANSFORM = A.Normalize(mean=MEAN, std=STD, max_pixel_value=1)
     TO_TENSOR = ToTensorV2()
 
-    def __init__(self, use_cpu=True):
+    def __init__(self, use_cpu: bool = True) -> None:
         self.device = torch.device(
             "cpu" if use_cpu else ("cuda" if torch.cuda.is_available() else "cpu")
         )
@@ -51,11 +51,11 @@ class StainNormalizerDemo:
         tensor = (tensor * 255).byte()
         return Image.fromarray(tensor.permute(1, 2, 0).cpu().numpy())
 
-    def save_image(self, tensor: torch.Tensor, path: Path):
+    def save_image(self, tensor: torch.Tensor, path: Path) -> None:
         img = self.tensor_to_image(tensor.squeeze(0))
         img.save(path)
 
-    def predict_image(self, input_path: Path, output_path: Path):
+    def predict_image(self, input_path: Path, output_path: Path) -> None:
         with torch.no_grad():
             input_tensor = self.load_image(input_path)
             output = self.model(input_tensor)
@@ -63,7 +63,7 @@ class StainNormalizerDemo:
         print(f"Saved normalized image to {output_path}")
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser(description="Stain Normalization Demo")
     parser.add_argument(
         "--input",

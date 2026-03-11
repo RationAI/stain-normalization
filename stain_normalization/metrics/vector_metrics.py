@@ -1,8 +1,10 @@
+from typing import Any
+
 import numpy as np
 from skimage.color import rgb2lab
 
 
-def _od_to_lab(od_vector: np.ndarray) -> np.ndarray:
+def _od_to_lab(od_vector: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
     """Convert optical density vector to Lab color.
 
     Args:
@@ -17,7 +19,7 @@ def _od_to_lab(od_vector: np.ndarray) -> np.ndarray:
     return rgb2lab(rgb.reshape(1, 1, 3)).flatten()
 
 
-def delta_e76(lab1: np.ndarray, lab2: np.ndarray) -> float:
+def delta_e76(lab1: np.ndarray[Any, Any], lab2: np.ndarray[Any, Any]) -> float:
     """CIE76 Delta E with dL=0 (chromaticity only).
 
     CIE76 Delta E is sqrt(dL^2 + da^2 + db^2). We set dL=0 because we compare
@@ -36,9 +38,9 @@ def delta_e76(lab1: np.ndarray, lab2: np.ndarray) -> float:
 
 
 def compare_vectors(
-    vecs1: np.ndarray,
-    vecs2: np.ndarray,
-) -> dict:
+    vecs1: np.ndarray[Any, Any],
+    vecs2: np.ndarray[Any, Any],
+) -> dict[str, float | bool]:
     """Compare two sets of stain vectors in Lab chromaticity space.
 
     Args:
@@ -51,10 +53,10 @@ def compare_vectors(
     """
     if np.any(np.isnan(vecs1)) or np.any(np.isnan(vecs2)):
         return {
-            'd_hematoxylin': float('nan'), 'd_eosin': float('nan'),
-            'was_swapped': False,
+            "d_hematoxylin": float("nan"),
+            "d_eosin": float("nan"),
+            "was_swapped": False,
         }
-
 
     sim_straight = np.dot(vecs1[0], vecs2[0]) + np.dot(vecs1[1], vecs2[1])
     sim_swapped = np.dot(vecs1[0], vecs2[1]) + np.dot(vecs1[1], vecs2[0])
@@ -67,9 +69,7 @@ def compare_vectors(
     lab2_b = _od_to_lab(vecs2_paired[1])
 
     return {
-        'd_hematoxylin': delta_e76(lab1_a, lab2_a),
-        'd_eosin': delta_e76(lab1_b, lab2_b),
-        'was_swapped': was_swapped,
+        "d_hematoxylin": delta_e76(lab1_a, lab2_a),
+        "d_eosin": delta_e76(lab1_b, lab2_b),
+        "was_swapped": was_swapped,
     }
-
-

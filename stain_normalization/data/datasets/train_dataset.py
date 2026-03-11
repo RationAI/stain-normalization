@@ -56,11 +56,11 @@ class _TrainSlideTiles(Dataset[Sample]):
         return len(self.slide_tiles)
 
     def __getitem__(self, idx: int) -> Sample:
-        original_image = self.slide_tiles[idx]
+        original_image_255 = self.slide_tiles[idx]
 
         # Create "wrong" image to use as input. Outputs image in float 0-1
-        modified_image = self.modify(image=original_image)["image"]
-        original_image = original_image / 255.0
+        modified_image = self.modify(image=original_image_255)["image"]
+        original_image = original_image_255 / 255.0
 
         if self.normalize:
             original_image = self.normalize(image=original_image)["image"]
@@ -69,4 +69,4 @@ class _TrainSlideTiles(Dataset[Sample]):
         original_image = self.to_tensor(image=original_image)["image"]
         modified_image = self.to_tensor(image=modified_image)["image"]
 
-        return modified_image, original_image
+        return modified_image, original_image  # type: ignore[return-value]  # untyped import

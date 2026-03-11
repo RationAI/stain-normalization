@@ -1,10 +1,12 @@
+from typing import Any
+
 import numpy as np
 from albumentations import ImageOnlyTransform
 from numpy.typing import NDArray
 from skimage.color import hsv2rgb, rgb2hsv
 
 
-class HVSModification(ImageOnlyTransform):
+class HVSModification(ImageOnlyTransform):  # type: ignore[misc]  # untyped import
     """Randomly modify hue, saturation, and value (brightness) of an image in HSV color space.
 
     Attributes:
@@ -30,7 +32,7 @@ class HVSModification(ImageOnlyTransform):
         self.saturation_range = saturation_range
         self.value_range = value_range
 
-    def apply(self, img: NDArray, **params) -> NDArray:
+    def apply(self, img: NDArray[Any], **params: Any) -> NDArray[Any]:
         """Apply the modifications to an image.
 
         Args:

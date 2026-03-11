@@ -16,6 +16,7 @@ import tempfile
 import traceback
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 
 import numpy as np
 import torch
@@ -23,7 +24,7 @@ from lightning import LightningModule, Trainer
 from omegaconf import DictConfig
 from PIL.ImageCms import createProfile
 
-from ._base import NormalizationCallback
+from stain_normalization.callbacks._base import NormalizationCallback
 
 
 def _srgb_icc_bytes() -> bytes:
@@ -31,9 +32,10 @@ def _srgb_icc_bytes() -> bytes:
     raw = createProfile("sRGB")
     # Pillow < 10: .tobuffer(), Pillow >= 10: .tobytes()
     try:
-        return raw.tobuffer()
+        return raw.tobuffer()  # type: ignore[attr-defined]  # deprecated in Pillow >=10
     except AttributeError:
         from PIL.ImageCms import ImageCmsProfile
+
         return ImageCmsProfile(raw).tobytes()
 
 
@@ -52,9 +54,9 @@ class _SlideMeta:
 @dataclass
 class _SlideBuffers:
     meta: _SlideMeta
-    temp_dir: tempfile.TemporaryDirectory
-    result_buffer: np.memmap  
-    count_buffer: np.memmap
+    temp_dir: tempfile.TemporaryDirectory[str]
+    result_buffer: np.memmap[Any, Any]
+    count_buffer: np.memmap[Any, Any]
 
 
 class WSIAssembler(NormalizationCallback):
@@ -75,7 +77,7 @@ class WSIAssembler(NormalizationCallback):
 
     def on_predict_start(self, trainer: Trainer, pl_module: LightningModule) -> None:
         self.output_dir.mkdir(parents=True, exist_ok=True)
-        slides_df = trainer.datamodule.predict.slides
+        slides_df = trainer.datamodule.predict.slides  # type: ignore[attr-defined]  # Lightning stub gap
 
         # Cache metadata only — buffers are opened lazily per slide
         for _, row in slides_df.iterrows():
@@ -124,6 +126,7 @@ class WSIAssembler(NormalizationCallback):
         """Save and free the currently active slide."""
         if self._active is None:
             return
+        assert self._active_name is not None
         try:
             self._save_slide(self._active_name, self._active)
         except Exception:
@@ -140,7 +143,7 @@ class WSIAssembler(NormalizationCallback):
         trainer: Trainer,
         pl_module: LightningModule,
         outputs: list[torch.Tensor],
-        batch: tuple[torch.Tensor, list[dict]],
+        batch: tuple[torch.Tensor, list[dict[str, Any]]],
         batch_idx: int,
         dataloader_idx: int = 0,
     ) -> None:
@@ -162,16 +165,17 @@ class WSIAssembler(NormalizationCallback):
             x, y = (int(v) for v in metadata["xy"].split("_"))
             self._place_tile(tile, x, y)
 
-    def _place_tile(self, tile: np.ndarray, x: int, y: int) -> None:
+    def _place_tile(self, tile: np.ndarray[Any, Any], x: int, y: int) -> None:
         """Place a predicted tile into the active slide buffer with overlap averaging."""
+        assert self._active is not None
         sb = self._active
         ex, ey = sb.meta.extent_x, sb.meta.extent_y
 
         h, w = min(tile.shape[0], ey - y), min(tile.shape[1], ex - x)
         tile = tile[:h, :w]
 
-        region = sb.result_buffer[y:y + h, x:x + w]
-        count = sb.count_buffer[y:y + h, x:x + w]
+        region = sb.result_buffer[y : y + h, x : x + w]
+        count = sb.count_buffer[y : y + h, x : x + w]
 
         # Running average: avg = (old * n + new) / (n + 1)
         overlap = count > 0
@@ -182,11 +186,13 @@ class WSIAssembler(NormalizationCallback):
                 (region.astype(np.float32) * n + tile) / (n + 1),
                 tile,
             )
-            sb.result_buffer[y:y + h, x:x + w] = np.clip(blended, 0, 255).astype(np.uint8)
+            sb.result_buffer[y : y + h, x : x + w] = np.clip(blended, 0, 255).astype(
+                np.uint8
+            )
         else:
-            sb.result_buffer[y:y + h, x:x + w] = tile
+            sb.result_buffer[y : y + h, x : x + w] = tile
 
-        sb.count_buffer[y:y + h, x:x + w] = count + 1
+        sb.count_buffer[y : y + h, x : x + w] = count + 1
 
     def on_predict_end(self, trainer: Trainer, pl_module: LightningModule) -> None:
         self._close_slide()
@@ -203,10 +209,14 @@ class WSIAssembler(NormalizationCallback):
         result_path = Path(sb.temp_dir.name) / "result.raw"
         count_path = Path(sb.temp_dir.name) / "count.raw"
 
-        result_img = pyvips.Image.rawload(str(result_path), meta.extent_x, meta.extent_y, 3)
+        result_img = pyvips.Image.rawload(
+            str(result_path), meta.extent_x, meta.extent_y, 3
+        )
         result_img = result_img.copy(interpretation=pyvips.Interpretation.SRGB)
 
-        count_img = pyvips.Image.rawload(str(count_path), meta.extent_x, meta.extent_y, 1)
+        count_img = pyvips.Image.rawload(
+            str(count_path), meta.extent_x, meta.extent_y, 1
+        )
         mask = count_img > 0
         # add white background for untouched areas (count=0)
         white = (pyvips.Image.black(meta.extent_x, meta.extent_y, bands=3) + 255).cast(

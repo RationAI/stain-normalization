@@ -16,7 +16,9 @@ import torch.nn.functional as F
 class DoubleConv(nn.Module):
     """(convolution => [BN] => ReLU) * 2."""
 
-    def __init__(self, in_channels, out_channels, mid_channels=None):
+    def __init__(
+        self, in_channels: int, out_channels: int, mid_channels: int | None = None
+    ) -> None:
         super().__init__()
         if not mid_channels:
             mid_channels = out_channels
@@ -29,32 +31,36 @@ class DoubleConv(nn.Module):
             nn.ReLU(inplace=True),
         )
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         return self.double_conv(x)
 
 
 class Down(nn.Module):
     """Downscaling with maxpool then double conv."""
 
-    def __init__(self, in_channels, out_channels):
+    def __init__(self, in_channels: int, out_channels: int) -> None:
         super().__init__()
         self.maxpool_conv = nn.Sequential(
             nn.MaxPool2d(2), DoubleConv(in_channels, out_channels)
         )
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         return self.maxpool_conv(x)
 
 
 class Up(nn.Module):
     """Upscaling then double conv."""
 
-    def __init__(self, in_channels, out_channels, bilinear=True):
+    def __init__(
+        self, in_channels: int, out_channels: int, bilinear: bool = True
+    ) -> None:
         super().__init__()
 
         # if bilinear, use the normal convolutions to reduce the number of channels
         if bilinear:
-            self.up = nn.Upsample(scale_factor=2, mode="bilinear", align_corners=True)
+            self.up: nn.Upsample | nn.ConvTranspose2d = nn.Upsample(
+                scale_factor=2, mode="bilinear", align_corners=True
+            )
             self.conv = DoubleConv(in_channels, out_channels, in_channels // 2)
         else:
             self.up = nn.ConvTranspose2d(
@@ -62,7 +68,7 @@ class Up(nn.Module):
             )
             self.conv = DoubleConv(in_channels, out_channels)
 
-    def forward(self, x1, x2):
+    def forward(self, x1: torch.Tensor, x2: torch.Tensor) -> torch.Tensor:
         x1 = self.up(x1)
         diffy = x2.size()[2] - x1.size()[2]
         diffx = x2.size()[3] - x1.size()[3]
@@ -73,16 +79,18 @@ class Up(nn.Module):
 
 
 class OutConv(nn.Module):
-    def __init__(self, in_channels, out_channels):
+    def __init__(self, in_channels: int, out_channels: int) -> None:
         super().__init__()
         self.conv = nn.Conv2d(in_channels, out_channels, kernel_size=1)
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         return self.conv(x)
 
 
 class UNet(nn.Module):
-    def __init__(self, in_channels=3, out_channels=3, bilinear=True):
+    def __init__(
+        self, in_channels: int = 3, out_channels: int = 3, bilinear: bool = True
+    ) -> None:
         super().__init__()
         self.in_conv = DoubleConv(in_channels, 64)
         self.down1 = Down(64, 128)
@@ -97,7 +105,7 @@ class UNet(nn.Module):
         self.up4 = Up(128, 64, bilinear)
         self.out_conv = OutConv(64, out_channels)
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         x1 = self.in_conv(x)
         x2 = self.down1(x1)
         x3 = self.down2(x2)

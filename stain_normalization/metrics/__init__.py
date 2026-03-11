@@ -1,9 +1,9 @@
-from .image_metrics import (
+from stain_normalization.metrics.image_metrics import (
     compute_lab_brightness_psnr,
     compute_nmi,
     compute_pcc,
 )
-from .vector_metrics import (
+from stain_normalization.metrics.vector_metrics import (
     compare_vectors,
 )
 

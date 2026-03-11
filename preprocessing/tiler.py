@@ -59,11 +59,8 @@ def handler(slide_path: Path) -> TiledSlideMetadata:
     return slide, tiles
 
 
-
-
 def main() -> None:
     slides = list(Path(SLIDES_PATH).rglob("*.mrxs"))
-
 
     slides, test_slides = train_test_split(slides, test_size=0.2)
     train_slides, val_slides = train_test_split(slides, test_size=0.1)
@@ -101,7 +98,7 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    #main()
+    # main()
     slides = [("/home/jovyan/staining/demo_data/P-2016_0077-08-1_hed_h0.6_e1.5.tiff")]
     train_slides_df, train_tiles_df = tiling(slides=slides, handler=handler)
 
@@ -112,4 +109,3 @@ if __name__ == "__main__":
             tiles=train_tiles_df,
             dataset_name="P-2016_0077-08-1_hed",
         )
-        
