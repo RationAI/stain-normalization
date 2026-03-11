@@ -1,0 +1,64 @@
+defaults:
+  - hydra: default
+  - logger: mlflow
+  - /data/datasets@data.train: stain_normalization/train
+  - /data/datasets@data.val: stain_normalization/val
+  - /data/datasets@data.test: stain_normalization/test
+  - /data/datasets@data.predict: stain_normalization/predict
+  - _self_
+
+seed: ${random_seed:}
+mode: fit
+checkpoint: mlflow-artifacts:/79/978f5d5e54844be3b42509cce76793d7/artifacts/checkpoints/epoch=7-step=152375/checkpoint.ckpt
+
+
+callbacks:
+  model_checkpoint:
+    _target_: lightning.pytorch.callbacks.ModelCheckpoint
+    save_top_k: 2
+    monitor: validation/loss
+    mode: min
+
+  tiles_export:
+    _target_: stain_normalization.callbacks.TilesExport
+    output_dir: ${output_dir}
+    normalization_config: ${data.test.normalize}
+
+  analysis_export:
+    _target_: stain_normalization.callbacks.AnalysisExport
+    output_dir: ${output_dir}
+    normalization_config: ${data.test.normalize}
+
+  wsi_assembler:
+    _target_: stain_normalization.callbacks.WSIAssembler
+    output_dir: ${output_dir}
+    normalization_config: ${data.predict.normalize}
+
+trainer:
+  enable_checkpointing: True
+  max_epochs: 30
+  log_every_n_steps: 5
+  val_check_interval: 0.5
+
+  callbacks:
+    - ${callbacks.model_checkpoint}
+    - ${callbacks.analysis_export}
+
+data:
+  batch_size: 24
+  num_workers: 10
+  
+metadata:
+  user: xlopatka
+  experiment_name: Stain-Normalization
+  run_name: fit bright
+  description: Stain Normalization
+  hyperparams: {}
+
+
+output_dir: ./data/test-dataset
+
+
+
+
+
