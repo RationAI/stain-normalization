@@ -43,3 +43,8 @@ mypy_check = "mypy ."
 
 [tool.pdm]
 distribution = false
+
+[tool.uv]
+environments = ["sys_platform == 'linux'"]
+
+override-dependencies = ["mlflow>=2.15.1"]
