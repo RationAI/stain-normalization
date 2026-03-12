@@ -7,11 +7,11 @@ from skimage.color import combine_stains, hed_from_rgb, rgb_from_hed, separate_s
 
 
 class HEDFactor(ImageOnlyTransform):  # type: ignore[misc]  # untyped import
-    """Adjust the intensity of Hematoxylin and Eosin stains in HED color space.
+    """Adjust the optical density (OD) of Hematoxylin and Eosin stains in HED color space.
 
     Attributes:
-        h_range: Range for the random intensity adjustment factor for the Hematoxylin channel.
-        e_range: Range for the random intensity adjustment factor for the Eosin channel.
+        h_range: Range for the random OD scaling factor for the Hematoxylin channel.
+        e_range: Range for the random OD scaling factor for the Eosin channel.
         p: Probability of applying the transformation.
     """
 
@@ -33,7 +33,7 @@ class HEDFactor(ImageOnlyTransform):  # type: ignore[misc]  # untyped import
             params: Additional parameters.
 
         Returns:
-            RGB image with modified Hematoxylin and Eosin channels
+            RGB image with OD-scaled Hematoxylin and Eosin channels
             as a float32 NumPy array with values in [0.0, 1.].
         """
         h_factor = np.random.uniform(*self.h_range)

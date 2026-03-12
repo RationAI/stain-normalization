@@ -16,12 +16,12 @@ dependencies = [
     "rationai-masks @ git+https://gitlab.ics.muni.cz/rationai/digital-pathology/libraries/masks.git",
     "rationai-tiling @ git+https://gitlab.ics.muni.cz/rationai/digital-pathology/libraries/tiling.git",
     "scikit-image>=0.25.2",
-    "openslide-bin>=4.0.0.6",
     "rationai-staining @ git+https://gitlab.ics.muni.cz/rationai/digital-pathology/libraries/staining.git",
+    "openslide-python>=1.4.3",
 ]
 
 [dependency-groups]
-dev = ["mypy", "pre-commit", "ruff"]
+dev = ["mypy", "ruff"]
 
 [tool.uv]
 environments = ["sys_platform == 'linux'"]
