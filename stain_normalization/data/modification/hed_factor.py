@@ -10,8 +10,8 @@ class HEDFactor(ImageOnlyTransform):  # type: ignore[misc]  # untyped import
     """Adjust the intensity of Hematoxylin and Eosin stains in HED color space.
 
     Attributes:
-        h_intensity_range: Range for the random intensity adjustment factor for the Hematoxylin channel.
-        e_intensity_range: Range for the random intensity adjustment factor for the Eosin channel.
+        h_range: Range for the random intensity adjustment factor for the Hematoxylin channel.
+        e_range: Range for the random intensity adjustment factor for the Eosin channel.
         always_apply: Whether this transformation should always be applied.
         p: Probability of applying the transformation.
     """
@@ -42,9 +42,9 @@ class HEDFactor(ImageOnlyTransform):  # type: ignore[misc]  # untyped import
         e_factor = np.random.uniform(*self.e_range)
 
         hed_image = separate_stains(img, hed_from_rgb)
-        h = np.clip(hed_image[:, :, 0] * h_factor, 0, 1)
-        e = np.clip(hed_image[:, :, 1] * e_factor, 0, 1)
+        h = hed_image[:, :, 0] * h_factor
+        e = hed_image[:, :, 1] * e_factor
         d = hed_image[:, :, 2]  # DAB channel unchanged
         modified_rgb = combine_stains(np.stack((h, e, d), axis=-1), rgb_from_hed)
 
-        return modified_rgb
+        return np.clip(modified_rgb, 0, 1).astype(np.float32)

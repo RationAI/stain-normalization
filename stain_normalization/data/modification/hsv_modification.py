@@ -6,7 +6,7 @@ from numpy.typing import NDArray
 from skimage.color import hsv2rgb, rgb2hsv
 
 
-class HVSModification(ImageOnlyTransform):  # type: ignore[misc]  # untyped import
+class HSVModification(ImageOnlyTransform):  # type: ignore[misc]  # untyped import
     """Randomly modify hue, saturation, and value (brightness) of an image in HSV color space.
 
     Attributes:
@@ -40,7 +40,7 @@ class HVSModification(ImageOnlyTransform):  # type: ignore[misc]  # untyped impo
             params: Additional parameters.
 
         Returns:
-            RGB image with HVS modifiedications as a float32
+            RGB image with HSV modifications as a float32
             NumPy array with values in [0.0, 1.].
         """
         hue_shift = np.random.uniform(*self.hue_shift_range)

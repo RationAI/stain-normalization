@@ -45,11 +45,10 @@ class CombinedModifications(ImageOnlyTransform):  # type: ignore[misc]  # untype
 
         modified_rgb = combine_stains(np.stack((h, e, d), axis=-1), rgb_from_hed)
 
-        return modified_rgb
+        return np.clip(modified_rgb, 0, 1).astype(np.float32)
 
     def modify_channel(self, channel: NDArray[np.float32]) -> NDArray[np.float32]:
         intensity_scale = np.random.uniform(*self.intensity_range)
         channel = channel * intensity_scale
         brightness_shift = np.random.uniform(*self.brightness_range)
-        channel = exposure.adjust_gamma(channel, gamma=1 + brightness_shift)
-        return np.clip(channel, 0, 1)
+        return exposure.adjust_gamma(channel, gamma=1 + brightness_shift)  # type: ignore[return-value]
