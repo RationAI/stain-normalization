@@ -15,7 +15,6 @@ class HSVModification(ImageOnlyTransform):  # type: ignore[misc]  # untyped impo
         saturation_range: Range for randomly scaling the saturation channel.
             Values >1.0 increase saturation, <1.0 decrease it.
         value_range: Range for randomly scaling the value (brightness) channel.
-        always_apply: Whether the transformation is always applied.
         p: Probability of applying the transformation.
     """
 
@@ -24,10 +23,9 @@ class HSVModification(ImageOnlyTransform):  # type: ignore[misc]  # untyped impo
         hue_shift_range: tuple[float, float] = (-0.2, 0.2),
         saturation_range: tuple[float, float] = (0.8, 1.5),
         value_range: tuple[float, float] = (0.8, 1.3),
-        always_apply: bool = True,
         p: float = 1.0,
     ):
-        super().__init__(always_apply, p)
+        super().__init__(p=p)
         self.hue_shift_range = hue_shift_range
         self.saturation_range = saturation_range
         self.value_range = value_range
@@ -54,4 +52,4 @@ class HSVModification(ImageOnlyTransform):  # type: ignore[misc]  # untyped impo
 
         modified_rgb = hsv2rgb(hsv_image)
 
-        return modified_rgb
+        return modified_rgb.astype(np.float32)

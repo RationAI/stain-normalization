@@ -12,7 +12,6 @@ class HEDFactor(ImageOnlyTransform):  # type: ignore[misc]  # untyped import
     Attributes:
         h_range: Range for the random intensity adjustment factor for the Hematoxylin channel.
         e_range: Range for the random intensity adjustment factor for the Eosin channel.
-        always_apply: Whether this transformation should always be applied.
         p: Probability of applying the transformation.
     """
 
@@ -20,10 +19,9 @@ class HEDFactor(ImageOnlyTransform):  # type: ignore[misc]  # untyped import
         self,
         h_range: tuple[float, float] = (0.8, 1.2),
         e_range: tuple[float, float] = (0.8, 1.2),
-        always_apply: bool = True,
         p: float = 1.0,
     ):
-        super().__init__(always_apply, p)
+        super().__init__(p=p)
         self.h_range = h_range
         self.e_range = e_range
 

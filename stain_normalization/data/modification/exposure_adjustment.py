@@ -12,17 +12,15 @@ class ExposureAdjustment(ImageOnlyTransform):  # type: ignore[misc]  # untyped i
         brightness_range: Range specifying the lower and upper bounds for the
             random brightness scaling factor. Values less than 1.0 darken the image,
             while values greater than 1.0 brighten it.
-        always_apply: Whether this transformation should always be applied.
         p: Probability of applying the transformation.
     """
 
     def __init__(
         self,
         brightness_range: tuple[float, float] = (0.8, 1.2),
-        always_apply: bool = True,
-        p: float = 1,
+        p: float = 1.0,
     ):
-        super().__init__(always_apply, p)
+        super().__init__(p=p)
         self.brightness_range = brightness_range
 
     def apply(self, img: NDArray[Any], **params: Any) -> NDArray[Any]:
