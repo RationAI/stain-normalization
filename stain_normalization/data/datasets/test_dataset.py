@@ -63,7 +63,7 @@ class _TestSlideTiles(Dataset[PredictSample]):
 
         # Create "wrong" image to use as input. Outputs image in float 0-1
         modified_image_raw = self.modify(image=original_image_255)["image"]
-        modified_image = modified_image_raw
+        modified_image = modified_image_raw.copy()
         original_image = original_image_255 / 255.0
 
         if self.normalize:

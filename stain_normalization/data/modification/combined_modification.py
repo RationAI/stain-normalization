@@ -11,23 +11,23 @@ class CombinedModifications(ImageOnlyTransform):  # type: ignore[misc]  # untype
     """Apply combined modifications to the H&E channels in HED color space.
 
     Attributes:
-        intensity_range: Range of multiplicative factors to scale stain channel intensities.
+        od_scale_range: Range of multiplicative factors to scale stain OD (optical density) values.
         brightness_range: Range for gamma correction to simulate brightness shift.
         p: Probability of applying the transformation.
     """
 
     def __init__(
         self,
-        intensity_range: tuple[float, float] = (0.4, 1.5),
+        od_scale_range: tuple[float, float] = (0.4, 1.5),
         brightness_range: tuple[float, float] = (-0.4, 0.4),
         p: float = 1.0,
     ):
         super().__init__(p=p)
-        self.intensity_range = intensity_range
+        self.od_scale_range = od_scale_range
         self.brightness_range = brightness_range
 
     def apply(self, img: NDArray[Any], **params: Any) -> NDArray[Any]:
-        """Apply intensity and brightness adjustments to H and E channels.
+        """Apply OD scaling and brightness adjustments to H and E channels.
 
         Args:
             img: Image to which the transformation will be applied.
@@ -46,7 +46,7 @@ class CombinedModifications(ImageOnlyTransform):  # type: ignore[misc]  # untype
         return np.clip(modified_rgb, 0, 1).astype(np.float32)
 
     def modify_channel(self, channel: NDArray[np.float32]) -> NDArray[np.float32]:
-        intensity_scale = np.random.uniform(*self.intensity_range)
-        channel = channel * intensity_scale
+        od_scale = np.random.uniform(*self.od_scale_range)
+        channel = channel * od_scale
         brightness_shift = np.random.uniform(*self.brightness_range)
         return exposure.adjust_gamma(channel, gamma=1 + brightness_shift)  # type: ignore[return-value]
