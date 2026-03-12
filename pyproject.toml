@@ -23,27 +23,6 @@ dependencies = [
 [dependency-groups]
 dev = ["mypy", "pre-commit", "ruff"]
 
-[tool.pdm.scripts]
-mask_generate = "python preprocessing/mask_generator.py"
-tiler = "python preprocessing/tiler.py"
-
-train = "python -m stain_normalization mode=fit"
-validate = "python -m stain_normalization mode=validate"
-test = "python -m stain_normalization mode=test"
-predict = "python -m stain_normalization mode=predict"
-l = { composite = ["lint", "format", "mypy_check"] }
-lint = "ruff check --fix"
-format = "ruff format"
-mypy_check = "mypy ."
-# post_install = { composite = [
-#    "pre-commit autoupdate",
-#    "pre-commit install",
-#    "pre-commit install --hook-type commit-msg",
-#] }
-
-[tool.pdm]
-distribution = false
-
 [tool.uv]
 environments = ["sys_platform == 'linux'"]
 

@@ -17,15 +17,15 @@ Demo skript umožňuje načítať jeden obrázok alebo celý priečinok, normali
 
 ## Spustenie dema
 
-Projekt je spravovaný pomocou nástroja **pdm**, ktorý umožňuje jednoduchú správu závislostí a prostredia. Stačí nainštalovať závislosti pomocou:
+Projekt je spravovaný pomocou nástroja **uv**, ktorý umožňuje jednoduchú správu závislostí a prostredia. Stačí nainštalovať závislosti pomocou:
 
 ```bash
-pdm install
+uv sync
 ```
 a potom spustiť demo skript:
 
 ```bash
-pdm run python demo.py --input ./demo_data/modified
+uv run python demo.py --input ./demo_data/modified
 ```
 
 ## Dostupné arguemnty:

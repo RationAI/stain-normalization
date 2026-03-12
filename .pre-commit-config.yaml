@@ -17,7 +17,6 @@ repos:
     hooks:
       # Run the linter.
       - id: ruff
-        entry: pdm lint --force-exclude
+        args: [--force-exclude]
       # Run the formatter.
       - id: ruff-format
-        entry: pdm format --force-exclude
