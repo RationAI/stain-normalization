@@ -8,7 +8,7 @@ license = { file = "LICENSE" }
 dependencies = [
     "lightning>=2.0.0",
     "albumentations>=1.4.14",
-    "torchmetrics>=1.4.14",
+    "torchmetrics>=1.4.3",
     "torchvision>=0.17.2",
     "torch>=2.2.2",
     "tqdm>=4.66.5",
