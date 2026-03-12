@@ -13,7 +13,6 @@ class CombinedModifications(ImageOnlyTransform):  # type: ignore[misc]  # untype
     Attributes:
         intensity_range: Range of multiplicative factors to scale stain channel intensities.
         brightness_range: Range for gamma correction to simulate brightness shift.
-        always_apply: Whether the transformation should always be applied.
         p: Probability of applying the transformation.
     """
 
@@ -21,10 +20,9 @@ class CombinedModifications(ImageOnlyTransform):  # type: ignore[misc]  # untype
         self,
         intensity_range: tuple[float, float] = (0.4, 1.5),
         brightness_range: tuple[float, float] = (-0.4, 0.4),
-        always_apply: bool = True,
         p: float = 1.0,
     ):
-        super().__init__(always_apply, p)
+        super().__init__(p=p)
         self.intensity_range = intensity_range
         self.brightness_range = brightness_range
 
