@@ -10,6 +10,18 @@ from stain_normalization.type_aliases import Sample
 
 
 class TrainDataset(MetaTiledSlides[Sample]):
+    """Dataset for training and validation.
+
+    Kept as separate classes for distinct return types and clean Hydra config
+    targets.
+    Main difference is in __getitem__;
+
+    Returns (modified_tensor, original_tensor) pairs — no metadata, no raw copies.
+
+    Differences from TestDataset: no metadata returned, no raw image copies kept.
+    Differences from PredictDataset: applies modify transform; no metadata.
+    """
+
     def __init__(
         self,
         uris: Iterable[str],

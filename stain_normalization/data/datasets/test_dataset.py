@@ -10,6 +10,18 @@ from stain_normalization.type_aliases import PredictSample
 
 
 class TestDataset(MetaTiledSlides[PredictSample]):
+    """Dataset for testing and analysis.
+
+    Same as TrainDataset but also returns a metadata dict with slide_name, xy
+    coordinates, and raw uint8 copies of both original and modified images —
+    needed for callbacks that export tiles or run analysis.
+
+    Differences from TrainDataset: returns metadata dict alongside tensors;
+    keeps raw image copies for export.
+    Differences from PredictDataset: applies modify transform to simulate
+    degraded input; real slides are not pre-modified.
+    """
+
     def __init__(
         self,
         uris: Iterable[str],
