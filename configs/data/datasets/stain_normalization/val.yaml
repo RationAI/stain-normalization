@@ -1,0 +1,7 @@
+defaults:
+  - /data/modify@modify: train
+  - /data/normalize@normalize: default
+  
+_target_: stain_normalization.data.datasets.TrainDataset
+uris: ["mlflow-artifacts:/65/a43da470f89848abb3a32e59c504ee1a/artifacts/MMCI TL Val 512"]
+
