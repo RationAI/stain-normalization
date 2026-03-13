@@ -3,6 +3,7 @@ from typing import Any
 import numpy as np
 from albumentations import ImageOnlyTransform
 from numpy.typing import NDArray
+from skimage.util import img_as_float
 
 
 class ExposureAdjustment(ImageOnlyTransform):  # type: ignore[misc]  # untyped import
@@ -35,9 +36,6 @@ class ExposureAdjustment(ImageOnlyTransform):  # type: ignore[misc]  # untyped i
             NumPy array with values in [0.0, 1.].
         """
         brightness_factor = np.random.uniform(*self.brightness_range)
-        img = img.astype(np.float32)
-        if img.max() > 1.0:
-            img = img / 255.0
-        img = np.clip(img * brightness_factor, 0.0, 1.0)
-
-        return img
+        img_float = img_as_float(img)
+        img = np.clip(img_float * brightness_factor, 0.0, 1.0)
+        return img.astype(np.float32)

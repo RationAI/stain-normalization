@@ -10,6 +10,16 @@ from stain_normalization.type_aliases import PredictSample
 
 
 class PredictDataset(MetaTiledSlides[PredictSample]):
+    """Dataset for inference on real (unmodified) slides.
+
+    Takes slides as-is — no modify transform. Returns the input tensor and a
+    metadata dict with slide_name and xy coordinates for WSI reassembly.
+
+    Differences from TrainDataset: no modify transform; returns metadata.
+    Differences from TestDataset: no modify transform; does not keep raw image
+    copies (not needed for reassembly).
+    """
+
     def __init__(
         self,
         uris: Iterable[str],

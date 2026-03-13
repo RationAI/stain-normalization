@@ -1,12 +1,18 @@
 from collections.abc import Iterable
+from typing import Any
 
+import torch
 from hydra.utils import instantiate
 from lightning import LightningDataModule
 from omegaconf import DictConfig
+from torch import Tensor
 from torch.utils.data import DataLoader
 
-from stain_normalization.data.utils import collate_fn
 from stain_normalization.type_aliases import Batch, PredictBatch
+
+
+def collate_fn(batch: list[tuple[Tensor, Any]]) -> tuple[Tensor, list[Any]]:
+    return torch.stack([x[0] for x in batch]), [x[1] for x in batch]
 
 
 class DataModule(LightningDataModule):
