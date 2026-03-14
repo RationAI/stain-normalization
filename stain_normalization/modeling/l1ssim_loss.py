@@ -32,6 +32,7 @@ class L1SSIMLoss(nn.Module):
         self._2d_window = (
             self._1d_window.mm(self._1d_window.t()).float().unsqueeze(0).unsqueeze(0)
         )
+        self.window: torch.Tensor
         self.register_buffer(
             "window",
             self._2d_window.expand(
