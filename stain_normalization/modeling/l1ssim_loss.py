@@ -1,7 +1,4 @@
-"""Original SSIM code based on pytorch-ssim by Evan Su (MIT License).
-
-https://github.com/Po-Hsun-Su/pytorch-ssim .
-
+"""
 The SSIM is based on implementation from gaussian-splatting and slightly simplified
 (pre-computed windows and removal of unused arguments).
 https://github.com/graphdeco-inria/gaussian-splatting/blob/472689c0dc70417448fb451bf529ae532d32c095/utils/loss_utils.py
@@ -35,13 +32,14 @@ class L1SSIMLoss(nn.Module):
         self._2d_window = (
             self._1d_window.mm(self._1d_window.t()).float().unsqueeze(0).unsqueeze(0)
         )
-        self.window = self._2d_window.expand(
-            self.channel, 1, self.window_size, self.window_size
-        ).contiguous()
+        self.register_buffer(
+            "window",
+            self._2d_window.expand(
+                self.channel, 1, self.window_size, self.window_size
+            ).contiguous(),
+        )
 
     def forward(self, image: torch.Tensor, target_image: torch.Tensor) -> torch.Tensor:
-        if self.window.device != image.device:
-            self.window = self.window.to(image.device)
         # L1 color loss
         l1_loss = F.l1_loss(image, target_image, reduction="mean")
 
