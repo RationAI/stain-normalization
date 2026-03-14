@@ -11,10 +11,24 @@ from stain_normalization.type_aliases import Batch, Outputs, PredictBatch
 
 
 class StainNormalizationModel(LightningModule):
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        lr: float = 1e-4,
+        lambda_dssim: float = 0.6,
+        lambda_l1: float = 0.2,
+        lambda_lum: float = 0.2,
+        lambda_gdl: float = 0.1,
+    ) -> None:
         super().__init__()
+        self.save_hyperparameters()
+        self.lr = lr
         self.unet = UNet(in_channels=3, out_channels=3)
-        self.criterion = L1SSIMLoss()
+        self.criterion = L1SSIMLoss(
+            lambda_dssim=lambda_dssim,
+            lambda_l1=lambda_l1,
+            lambda_lum=lambda_lum,
+            lambda_gdl=lambda_gdl,
+        )
 
         self.val_metrics = MetricCollection(
             {"ssim": StructuralSimilarityIndexMeasure(), "l1": MeanAbsoluteError()}
@@ -64,4 +78,4 @@ class StainNormalizationModel(LightningModule):
         return self(inputs)
 
     def configure_optimizers(self) -> Optimizer:
-        return Adam(self.parameters(), lr=1e-4)
+        return Adam(self.parameters(), lr=self.lr)

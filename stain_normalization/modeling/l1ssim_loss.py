@@ -28,7 +28,7 @@ class L1SSIMLoss(nn.Module):
         self.lambda_lum = lambda_lum
         self.lambda_gdl = lambda_gdl
 
-        # precompute SSIM windows to avoid repetation
+        # precompute SSIM windows to avoid repetition
         self.window_size = 11
         self.channel = 3
         self._1d_window = gaussian(self.window_size, 1.5).unsqueeze(1)
@@ -106,7 +106,7 @@ class L1SSIMLoss(nn.Module):
 
 
 def gaussian(window_size: int, sigma: float) -> torch.Tensor:
-    gauss = torch.Tensor(
+    gauss = torch.tensor(
         [
             exp(-((x - window_size // 2) ** 2) / float(2 * sigma**2))
             for x in range(window_size)
@@ -115,17 +115,9 @@ def gaussian(window_size: int, sigma: float) -> torch.Tensor:
     return gauss / gauss.sum()
 
 
-def brightness_loss(
-    pred: torch.Tensor, target: torch.Tensor, he_weights: list[float] | None = None
-) -> torch.Tensor:
-    device = pred.device
-    if he_weights is None:
-        he_weights = [0.33, 0.33, 0.33]
-    weights = torch.tensor(he_weights, device=device).view(1, 3, 1, 1)
-
-    pred_mean = (pred * weights).mean(dim=[2, 3], keepdim=True)
-    target_mean = (target * weights).mean(dim=[2, 3], keepdim=True)
-
+def brightness_loss(pred: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
+    pred_mean = pred.mean(dim=[1, 2, 3])
+    target_mean = target.mean(dim=[1, 2, 3])
     return F.l1_loss(pred_mean, target_mean)
 
 
