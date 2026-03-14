@@ -1,0 +1,15 @@
+_target_: albumentations.OneOf
+p: 1.0
+transforms:
+  - _target_: stain_normalization.data.modification.HEDFactor
+    h_range: [0.8, 1.2]
+    e_range: [0.8, 1.2]
+  - _target_: stain_normalization.data.modification.ExposureAdjustment
+    brightness_range: [0.8, 1.2]
+  - _target_: stain_normalization.data.modification.HVSModification
+    hue_shift_range: [-0.4, 0.4]
+    saturation_range: [0.8, 1.5]
+    value_range: [0.8, 1.3]
+  - _target_: stain_normalization.data.modification.CombinedModifications
+    intensity_range: [0.65, 1.35]
+    brightness_range: [-0.4, 0.4]

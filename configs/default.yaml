@@ -1,0 +1,55 @@
+defaults:
+  - hydra: default
+  - logger: mlflow
+  - /data/datasets@data.train: stain_normalization/train
+  - /data/datasets@data.val: stain_normalization/val
+  - /data/datasets@data.test: stain_normalization/test
+  - /data/datasets@data.predict: stain_normalization/predict
+  - _self_
+
+seed: ${random_seed:}
+mode: fit
+checkpoint: null
+
+
+callbacks:
+  model_checkpoint:
+    _target_: lightning.pytorch.callbacks.ModelCheckpoint
+    save_top_k: 2
+    monitor: validation/loss
+    mode: min
+
+  early_stopping:
+    _target_: lightning.pytorch.callbacks.EarlyStopping
+    monitor: validation/loss
+    patience: 5
+    mode: min
+
+model:
+  lr: 1e-4
+  lambda_dssim: 0.6
+  lambda_l1: 0.2
+  lambda_lum: 0.2
+  lambda_gdl: 0.1
+
+trainer:
+  enable_checkpointing: True
+  max_epochs: 100
+  limit_train_batches: 5000
+  log_every_n_steps: 5
+
+  callbacks:
+    - ${callbacks.model_checkpoint}
+    - ${callbacks.early_stopping}
+
+data:
+  batch_size: 64
+  num_workers: 8
+  
+metadata:
+  user: ???
+  experiment_name: Stain-Normalization
+  run_name: ???
+  description: ???
+  hyperparams: ${model}
+
