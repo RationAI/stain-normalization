@@ -77,4 +77,4 @@ class StainNormalizationModel(LightningModule):
         return self(inputs)
 
     def configure_optimizers(self) -> Optimizer:
-        return Adam(self.parameters(), lr=self.hparams.lr)
+        return Adam(self.parameters(), lr=self.hparams.lr)  # type: ignore[attr-defined]

@@ -40,7 +40,7 @@ class TrainDataset(MetaTiledSlides[Sample]):
                 modify=self.modify,
                 normalize=self.normalize,
             )
-             for slide in self.slides
+            for slide in self.slides
         )
 
 
