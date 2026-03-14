@@ -21,7 +21,6 @@ class StainNormalizationModel(LightningModule):
     ) -> None:
         super().__init__()
         self.save_hyperparameters()
-        self.lr = lr
         self.unet = UNet(in_channels=3, out_channels=3)
         self.criterion = L1SSIMLoss(
             lambda_dssim=lambda_dssim,
@@ -78,4 +77,4 @@ class StainNormalizationModel(LightningModule):
         return self(inputs)
 
     def configure_optimizers(self) -> Optimizer:
-        return Adam(self.parameters(), lr=self.lr)
+        return Adam(self.parameters(), lr=self.hparams.lr)
