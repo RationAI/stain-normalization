@@ -122,8 +122,8 @@ def brightness_loss(pred: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
 
 def gradient_loss(image: torch.Tensor, target_image: torch.Tensor) -> torch.Tensor:
     def gradient(x: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
-        dx = torch.abs(x[:, :, :-1, :] - x[:, :, 1:, :])  # Horizontal gradient
-        dy = torch.abs(x[:, :, :, :-1] - x[:, :, :, 1:])  # Vertical gradient
+        dx = torch.abs(x[:, :, :, :-1] - x[:, :, :, 1:])  # Horizontal gradient
+        dy = torch.abs(x[:, :, :-1, :] - x[:, :, 1:, :])  # Vertical gradient
         return dx, dy
 
     image_dx, image_dy = gradient(image)
