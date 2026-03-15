@@ -15,8 +15,7 @@ checkpoint: null
 callbacks:
   model_checkpoint:
     _target_: lightning.pytorch.callbacks.ModelCheckpoint
-    save_top_k: 1
-    save_last: true
+    save_top_k: 2
     monitor: validation/loss
     mode: min
 
@@ -37,7 +36,7 @@ trainer:
   enable_checkpointing: True
   max_epochs: 100
   limit_train_batches: 5000
-  log_every_n_steps: 50
+  log_every_n_steps: 5
 
   callbacks:
     - ${callbacks.model_checkpoint}
