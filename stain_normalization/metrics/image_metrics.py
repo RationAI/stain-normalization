@@ -50,7 +50,7 @@ def compute_mean_brightness(img: np.ndarray[Any, Any]) -> float:
         img: RGB image (uint8).
 
     Returns:
-        Mean L* value (0–100 scale, higher = brighter).
+        Mean L* value (0-100 scale, higher = brighter).
     """
     lab = rgb2lab(img)
     return float(lab[:, :, 0].mean())
@@ -68,8 +68,8 @@ def compute_lab_brightness_psnr(
     Returns:
         PSNR in dB on the lightness channel.
     """
-    lab1 = rgb2lab(img1.astype(np.float32) / 255.0)
-    lab2 = rgb2lab(img2.astype(np.float32) / 255.0)
+    lab1 = rgb2lab(img1)
+    lab2 = rgb2lab(img2)
     return float(
         peak_signal_noise_ratio(lab1[:, :, 0], lab2[:, :, 0], data_range=100.0)
     )

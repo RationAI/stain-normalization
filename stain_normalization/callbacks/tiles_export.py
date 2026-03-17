@@ -7,6 +7,7 @@ from omegaconf import DictConfig
 from PIL import Image
 
 from stain_normalization.callbacks._base import NormalizationCallback
+from stain_normalization.type_aliases import Outputs
 
 
 class TilesExport(NormalizationCallback):
@@ -38,7 +39,7 @@ class TilesExport(NormalizationCallback):
         self,
         trainer: Trainer,
         pl_module: LightningModule,
-        outputs: list[torch.Tensor],
+        outputs: Outputs,
         batch: tuple[torch.Tensor, list[dict[str, Any]]],
         batch_idx: int,
         dataloader_idx: int = 0,
@@ -67,7 +68,7 @@ class TilesExport(NormalizationCallback):
         self,
         trainer: Trainer,
         pl_module: LightningModule,
-        outputs: list[torch.Tensor],
+        outputs: Outputs,
         batch: tuple[torch.Tensor, list[dict[str, Any]]],
         batch_idx: int,
         dataloader_idx: int = 0,

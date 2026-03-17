@@ -27,7 +27,7 @@ class StainAnalyzer:
     Args:
         reference: Optional fixed reference image. If given, stain vectors,
             NMI, and mean brightness are pre-computed once.
-        metrics: Which metrics to compute. None = all.
+        metrics: Which metrics to compute. None or [] = all.
     """
 
     AVAILABLE_METRICS: ClassVar[list[str]] = [
@@ -63,6 +63,10 @@ class StainAnalyzer:
         if reference is not None:
             if "vectors" in self.metrics:
                 self._ref_vectors = estimate_stain_vectors(reference)
+                if np.isnan(self._ref_vectors).any():
+                    raise ValueError(
+                        "Reference image has too much background; no valid stain vectors found."
+                    )
             if "nmi" in self.metrics:
                 self._ref_nmi = compute_nmi(reference)
             if "mean_brightness" in self.metrics:
@@ -81,27 +85,28 @@ class StainAnalyzer:
         self,
         image: np.ndarray[Any, Any],
         image_id: str | None = None,
-        reference: np.ndarray[Any, Any] | None = None,
+        paired_image: np.ndarray[Any, Any] | None = None,
     ) -> dict[str, Any]:
         """Compare an image against the reference and store the result.
 
         Args:
             image: Image to compare.
             image_id: Optional identifier for this comparison.
-            reference: Override reference image for this call.
+            paired_image: Paired original image for this specific tile.
+                When provided, structural metrics (SSIM, PCC, Lab PSNR) are computed.
 
         Returns:
             Dict with metric results.
         """
-        ref_img = reference if reference is not None else self._ref_img
+        ref_img = paired_image if paired_image is not None else self._ref_img
         if ref_img is None:
             raise ValueError(
                 "No reference image. Pass one to __init__ or to compare()."
             )
 
-        is_paired = reference is not None
+        is_paired = paired_image is not None
 
-        if reference is not None:
+        if paired_image is not None:
             ref_vectors = (
                 estimate_stain_vectors(ref_img) if "vectors" in self.metrics else None
             )
@@ -118,10 +123,8 @@ class StainAnalyzer:
 
         result: dict[str, Any] = {"id": image_id} if image_id is not None else {}
 
-        if "vectors" in self.metrics:
-            assert (
-                ref_vectors is not None
-            )  # fails if reference has too much background and no valid stain vectors
+        if "vectors" in self.metrics and ref_vectors is not None:
+            # ref_vectors can be None for paired tiles with too much background
             img_vectors = estimate_stain_vectors(image)
             vec_result = compare_vectors(ref_vectors, img_vectors)
             result.update(vec_result)
@@ -176,6 +179,8 @@ class StainAnalyzer:
         """
         df = self.results
         numeric_cols = df.select_dtypes(include=[np.number]).columns
+        if df.empty or len(numeric_cols) == 0:
+            return pd.DataFrame()
         return df[numeric_cols].describe(percentiles=[0.05, 0.25, 0.5, 0.75, 0.95])
 
     def get_baseline_ranges(
