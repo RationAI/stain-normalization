@@ -14,6 +14,7 @@ from skimage.metrics import structural_similarity
 
 from stain_normalization.metrics.image_metrics import (
     compute_lab_brightness_psnr,
+    compute_mean_brightness,
     compute_nmi,
     compute_pcc,
 )
@@ -24,8 +25,8 @@ class StainAnalyzer:
     """Compare images using selected metrics, accumulate results.
 
     Args:
-        reference: Optional fixed reference image. If given, stain vectors
-            and NMI are pre-computed once.
+        reference: Optional fixed reference image. If given, stain vectors,
+            NMI, and mean brightness are pre-computed once.
         metrics: Which metrics to compute. None = all.
     """
 
@@ -35,6 +36,7 @@ class StainAnalyzer:
         "pcc",
         "nmi",
         "lab_psnr",
+        "mean_brightness",
     ]
     PAIRED_ONLY: ClassVar[set[str]] = {"ssim", "pcc", "lab_psnr"}
 
@@ -52,16 +54,19 @@ class StainAnalyzer:
                     f"Unknown metric '{m}'. Available: {self.AVAILABLE_METRICS}"
                 )
 
-        # if we have reference image, precompute stain vectors and NMI
+        # if we have reference image, precompute stain vectors, NMI, and brightness
         self._ref_img = reference
         self._ref_vectors = None
         self._ref_nmi = None
+        self._ref_brightness = None
 
         if reference is not None:
             if "vectors" in self.metrics:
                 self._ref_vectors = estimate_stain_vectors(reference)
             if "nmi" in self.metrics:
                 self._ref_nmi = compute_nmi(reference)
+            if "mean_brightness" in self.metrics:
+                self._ref_brightness = compute_mean_brightness(reference)
 
     @property
     def results(self) -> pd.DataFrame:
@@ -101,16 +106,22 @@ class StainAnalyzer:
                 estimate_stain_vectors(ref_img) if "vectors" in self.metrics else None
             )
             ref_nmi = compute_nmi(ref_img) if "nmi" in self.metrics else None
+            ref_brightness = (
+                compute_mean_brightness(ref_img)
+                if "mean_brightness" in self.metrics
+                else None
+            )
         else:
             ref_vectors = self._ref_vectors
             ref_nmi = self._ref_nmi
+            ref_brightness = self._ref_brightness
 
         result: dict[str, Any] = {"id": image_id} if image_id is not None else {}
 
         if "vectors" in self.metrics:
             assert (
                 ref_vectors is not None
-            )  # refrence image deosnt have stain vectors (too much background)
+            )  # fails if reference has too much background and no valid stain vectors
             img_vectors = estimate_stain_vectors(image)
             vec_result = compare_vectors(ref_vectors, img_vectors)
             result.update(vec_result)
@@ -144,6 +155,13 @@ class StainAnalyzer:
 
         if "lab_psnr" in self.metrics and is_paired:
             result["lab_brightness_psnr"] = compute_lab_brightness_psnr(ref_img, image)
+
+        if "mean_brightness" in self.metrics:
+            assert ref_brightness is not None
+            img_brightness = compute_mean_brightness(image)
+            result["ref_mean_brightness"] = ref_brightness
+            result["mean_brightness"] = img_brightness
+            result["mean_brightness_diff"] = img_brightness - ref_brightness
 
         self._results.append(result)
         return result

@@ -1,17 +1,3 @@
-"""Callback for assembling predicted tiles into whole-slide pyramid TIFFs."""
-
-# DEV: Key design decisions:
-# DEV: - One slide buffer at a time — slides are processed sequentially by ConcatDataset,
-# DEV:   so we open a buffer on the first tile of a slide and close it when the slide changes.
-# DEV:   This keeps peak temp disk at ~one slide (~5-10 GB at level 0 with sparse tissue),
-# DEV:   regardless of how many slides are in the predict set.
-# DEV: - Buffers are zero-initialized (sparse mmap) — only pages where tiles actually land
-# DEV:   get written to disk. White fill for untouched background is applied by pyvips at save.
-# DEV: - Running average (uint8 result + uint8 count) instead of float32 sum accumulator.
-# DEV:   Cuts temp disk ~4x vs the sum approach. Float math is done only per-tile (512x512).
-# DEV: - Slide transition is detected per-tile inside the batch loop, not per-batch,
-# DEV:   so transition batches (last tiles of A + first tiles of B) are handled correctly.
-
 import tempfile
 import traceback
 from dataclasses import dataclass
@@ -22,21 +8,8 @@ import numpy as np
 import torch
 from lightning import LightningModule, Trainer
 from omegaconf import DictConfig
-from PIL.ImageCms import createProfile
 
 from stain_normalization.callbacks._base import NormalizationCallback
-
-
-def _srgb_icc_bytes() -> bytes:
-    """Generate sRGB ICC profile bytes for embedding in TIFFs."""
-    raw = createProfile("sRGB")
-    # Pillow < 10: .tobuffer(), Pillow >= 10: .tobytes()
-    try:
-        return raw.tobuffer()  # type: ignore[attr-defined]  # deprecated in Pillow >=10
-    except AttributeError:
-        from PIL.ImageCms import ImageCmsProfile
-
-        return ImageCmsProfile(raw).tobytes()
 
 
 @dataclass
@@ -74,6 +47,7 @@ class WSIAssembler(NormalizationCallback):
         self._slide_meta: dict[str, _SlideMeta] = {}
         self._active: _SlideBuffers | None = None
         self._active_name: str | None = None
+        self._failed_slides: list[str] = []
 
     def on_predict_start(self, trainer: Trainer, pl_module: LightningModule) -> None:
         self.output_dir.mkdir(parents=True, exist_ok=True)
@@ -127,10 +101,13 @@ class WSIAssembler(NormalizationCallback):
         if self._active is None:
             return
         assert self._active_name is not None
+        slide_name = self._active_name
         try:
-            self._save_slide(self._active_name, self._active)
+            self._save_slide(slide_name, self._active)
         except Exception:
+            print(f"ERROR: Failed to save slide '{slide_name}'")
             traceback.print_exc()
+            self._failed_slides.append(slide_name)
         finally:
             del self._active.result_buffer
             del self._active.count_buffer
@@ -152,13 +129,13 @@ class WSIAssembler(NormalizationCallback):
             slide_name = metadata["slide_name"]
 
             if slide_name not in self._slide_meta:
-                print(f"Unknown slide '{slide_name}', skipping tile.")
-                continue
+                raise ValueError(
+                    f"Slide '{slide_name}' not found in predict dataset metadata. "
+                    f"Available: {list(self._slide_meta.keys())}"
+                )
 
             if slide_name != self._active_name:
-                if self._active_name is not None:
-                    print(f"Slide transition: {self._active_name} → {slide_name}")
-                    self._close_slide()
+                self._close_slide()
                 self._open_slide(slide_name)
 
             tile = self.tensor_to_image(outputs[b])
@@ -196,6 +173,10 @@ class WSIAssembler(NormalizationCallback):
 
     def on_predict_end(self, trainer: Trainer, pl_module: LightningModule) -> None:
         self._close_slide()
+        if self._failed_slides:
+            print(
+                f"WARNING: Failed to save {len(self._failed_slides)} slide(s): {self._failed_slides}"
+            )
         self._slide_meta.clear()
 
     def _save_slide(self, slide_name: str, sb: _SlideBuffers) -> None:
@@ -223,10 +204,6 @@ class WSIAssembler(NormalizationCallback):
             pyvips.BandFormat.UCHAR
         )
         final_img = mask.ifthenelse(result_img, white)
-
-        final_img.set_type(
-            pyvips.GValue.blob_type, "icc-profile-data", _srgb_icc_bytes()
-        )
 
         output_path = self.output_dir / f"{slide_name}_norm.tiff"
         final_img.tiffsave(
