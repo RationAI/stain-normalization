@@ -8,6 +8,7 @@ from omegaconf import DictConfig
 
 from stain_normalization.analysis.analyzer import StainAnalyzer
 from stain_normalization.callbacks._base import NormalizationCallback
+from stain_normalization.type_aliases import Outputs
 
 
 class AnalysisExport(NormalizationCallback):
@@ -27,7 +28,7 @@ class AnalysisExport(NormalizationCallback):
         self,
         trainer: Trainer,
         pl_module: LightningModule,
-        outputs: list[torch.Tensor],
+        outputs: Outputs,
         batch: tuple[torch.Tensor, list[dict[str, Any]]],
         batch_idx: int,
         dataloader_idx: int = 0,
@@ -38,8 +39,8 @@ class AnalysisExport(NormalizationCallback):
             modified_img = (batch[1][b]["modified_image"] * 255).astype("uint8")
             predicted_img = self.tensor_to_image(outputs[b])
 
-            self.mod_analyzer.compare(modified_img, reference=original_img)
-            self.pred_analyzer.compare(predicted_img, reference=original_img)
+            self.mod_analyzer.compare(modified_img, paired_image=original_img)
+            self.pred_analyzer.compare(predicted_img, paired_image=original_img)
 
     def on_test_end(
         self,

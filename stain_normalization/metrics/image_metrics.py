@@ -68,8 +68,8 @@ def compute_lab_brightness_psnr(
     Returns:
         PSNR in dB on the lightness channel.
     """
-    lab1 = rgb2lab(img1.astype(np.float32) / 255.0)
-    lab2 = rgb2lab(img2.astype(np.float32) / 255.0)
+    lab1 = rgb2lab(img1)
+    lab2 = rgb2lab(img2)
     return float(
         peak_signal_noise_ratio(lab1[:, :, 0], lab2[:, :, 0], data_range=100.0)
     )

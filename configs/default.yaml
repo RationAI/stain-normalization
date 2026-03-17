@@ -20,6 +20,7 @@ callbacks:
     monitor: validation/loss
     mode: min
 
+  # opt-in callbacks — add to trainer.callbacks when needed
   tiles_export:
     _target_: stain_normalization.callbacks.TilesExport
     output_dir: ${output_dir}

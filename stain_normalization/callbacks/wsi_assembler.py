@@ -10,6 +10,7 @@ from lightning import LightningModule, Trainer
 from omegaconf import DictConfig
 
 from stain_normalization.callbacks._base import NormalizationCallback
+from stain_normalization.type_aliases import Outputs
 
 
 @dataclass
@@ -119,7 +120,7 @@ class WSIAssembler(NormalizationCallback):
         self,
         trainer: Trainer,
         pl_module: LightningModule,
-        outputs: list[torch.Tensor],
+        outputs: Outputs,
         batch: tuple[torch.Tensor, list[dict[str, Any]]],
         batch_idx: int,
         dataloader_idx: int = 0,
@@ -148,7 +149,10 @@ class WSIAssembler(NormalizationCallback):
         sb = self._active
         ex, ey = sb.meta.extent_x, sb.meta.extent_y
 
-        h, w = min(tile.shape[0], ey - y), min(tile.shape[1], ex - x)
+        h = max(0, min(tile.shape[0], ey - y))
+        w = max(0, min(tile.shape[1], ex - x))
+        if h == 0 or w == 0:
+            return
         tile = tile[:h, :w]
 
         region = sb.result_buffer[y : y + h, x : x + w]
