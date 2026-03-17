@@ -43,6 +43,19 @@ def compute_pcc(img1: np.ndarray[Any, Any], img2: np.ndarray[Any, Any]) -> float
     return float(np.corrcoef(img1_flat, img2_flat)[0, 1])
 
 
+def compute_mean_brightness(img: np.ndarray[Any, Any]) -> float:
+    """Mean L* brightness of an image in CIE Lab color space.
+
+    Args:
+        img: RGB image (uint8).
+
+    Returns:
+        Mean L* value (0–100 scale, higher = brighter).
+    """
+    lab = rgb2lab(img)
+    return float(lab[:, :, 0].mean())
+
+
 def compute_lab_brightness_psnr(
     img1: np.ndarray[Any, Any], img2: np.ndarray[Any, Any]
 ) -> float:
