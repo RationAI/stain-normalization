@@ -27,7 +27,7 @@ class StainAnalyzer:
     Args:
         reference: Optional fixed reference image. If given, stain vectors,
             NMI, and mean brightness are pre-computed once.
-        metrics: Which metrics to compute. None = all.
+        metrics: Which metrics to compute. None or [] = all.
     """
 
     AVAILABLE_METRICS: ClassVar[list[str]] = [
@@ -179,6 +179,8 @@ class StainAnalyzer:
         """
         df = self.results
         numeric_cols = df.select_dtypes(include=[np.number]).columns
+        if df.empty or len(numeric_cols) == 0:
+            return pd.DataFrame()
         return df[numeric_cols].describe(percentiles=[0.05, 0.25, 0.5, 0.75, 0.95])
 
     def get_baseline_ranges(

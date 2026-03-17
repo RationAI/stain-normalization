@@ -50,7 +50,7 @@ def compute_mean_brightness(img: np.ndarray[Any, Any]) -> float:
         img: RGB image (uint8).
 
     Returns:
-        Mean L* value (0–100 scale, higher = brighter).
+        Mean L* value (0-100 scale, higher = brighter).
     """
     lab = rgb2lab(img)
     return float(lab[:, :, 0].mean())
