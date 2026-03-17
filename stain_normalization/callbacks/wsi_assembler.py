@@ -174,7 +174,9 @@ class WSIAssembler(NormalizationCallback):
     def on_predict_end(self, trainer: Trainer, pl_module: LightningModule) -> None:
         self._close_slide()
         if self._failed_slides:
-            print(f"WARNING: Failed to save {len(self._failed_slides)} slide(s): {self._failed_slides}")
+            print(
+                f"WARNING: Failed to save {len(self._failed_slides)} slide(s): {self._failed_slides}"
+            )
         self._slide_meta.clear()
 
     def _save_slide(self, slide_name: str, sb: _SlideBuffers) -> None:
