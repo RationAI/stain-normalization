@@ -1,11 +1,10 @@
-from typing import Any
-
 import numpy as np
+from numpy.typing import NDArray
 from skimage.color import rgb2lab
 from skimage.metrics import peak_signal_noise_ratio
 
 
-def compute_nmi(img: np.ndarray[Any, Any]) -> float:
+def compute_nmi(img: NDArray[np.uint8]) -> float:
     """Normalized Median Intensity — measures relative brightness of an image.
 
     Args:
@@ -24,7 +23,7 @@ def compute_nmi(img: np.ndarray[Any, Any]) -> float:
     return float(median_val / p95_val)
 
 
-def compute_pcc(img1: np.ndarray[Any, Any], img2: np.ndarray[Any, Any]) -> float:
+def compute_pcc(img1: NDArray[np.uint8], img2: NDArray[np.uint8]) -> float:
     """Pearson Correlation Coefficient between two images.
 
     Args:
@@ -43,7 +42,7 @@ def compute_pcc(img1: np.ndarray[Any, Any], img2: np.ndarray[Any, Any]) -> float
     return float(np.corrcoef(img1_flat, img2_flat)[0, 1])
 
 
-def compute_mean_brightness(img: np.ndarray[Any, Any]) -> float:
+def compute_mean_brightness(img: NDArray[np.uint8]) -> float:
     """Mean L* brightness of an image in CIE Lab color space.
 
     Args:
@@ -57,7 +56,7 @@ def compute_mean_brightness(img: np.ndarray[Any, Any]) -> float:
 
 
 def compute_lab_brightness_psnr(
-    img1: np.ndarray[Any, Any], img2: np.ndarray[Any, Any]
+    img1: NDArray[np.uint8], img2: NDArray[np.uint8]
 ) -> float:
     """PSNR on the L* channel in Lab color space.
 

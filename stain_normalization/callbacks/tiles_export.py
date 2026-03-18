@@ -6,11 +6,11 @@ from lightning import LightningModule, Trainer
 from omegaconf import DictConfig
 from PIL import Image
 
-from stain_normalization.callbacks._base import NormalizationCallback
+from stain_normalization.callbacks._base import DenormalizationCallback
 from stain_normalization.type_aliases import Outputs
 
 
-class TilesExport(NormalizationCallback):
+class TilesExport(DenormalizationCallback):
     def __init__(
         self,
         output_dir: str | Path,

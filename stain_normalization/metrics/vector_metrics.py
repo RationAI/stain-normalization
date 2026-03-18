@@ -1,10 +1,9 @@
-from typing import Any
-
 import numpy as np
+from numpy.typing import NDArray
 from skimage.color import rgb2lab
 
 
-def _od_to_lab(od_vector: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
+def _od_to_lab(od_vector: NDArray[np.floating]) -> NDArray[np.floating]:
     """Convert optical density vector to Lab color.
 
     Args:
@@ -19,7 +18,7 @@ def _od_to_lab(od_vector: np.ndarray[Any, Any]) -> np.ndarray[Any, Any]:
     return rgb2lab(rgb.reshape(1, 1, 3)).flatten()
 
 
-def delta_e76(lab1: np.ndarray[Any, Any], lab2: np.ndarray[Any, Any]) -> float:
+def delta_e76(lab1: NDArray[np.floating], lab2: NDArray[np.floating]) -> float:
     """CIE76 Delta E with dL=0 (chromaticity only).
 
     CIE76 Delta E is sqrt(dL^2 + da^2 + db^2). We set dL=0 because we compare
@@ -38,8 +37,8 @@ def delta_e76(lab1: np.ndarray[Any, Any], lab2: np.ndarray[Any, Any]) -> float:
 
 
 def compare_vectors(
-    vecs1: np.ndarray[Any, Any],
-    vecs2: np.ndarray[Any, Any],
+    vecs1: NDArray[np.floating],
+    vecs2: NDArray[np.floating],
 ) -> dict[str, float | bool]:
     """Compare two sets of stain vectors in Lab chromaticity space.
 
