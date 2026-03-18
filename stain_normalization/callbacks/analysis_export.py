@@ -7,11 +7,11 @@ from lightning import LightningModule, Trainer
 from omegaconf import DictConfig
 
 from stain_normalization.analysis.analyzer import StainAnalyzer
-from stain_normalization.callbacks._base import NormalizationCallback
+from stain_normalization.callbacks._base import DenormalizationCallback
 from stain_normalization.type_aliases import Outputs
 
 
-class AnalysisExport(NormalizationCallback):
+class AnalysisExport(DenormalizationCallback):
     """Exports analysis metrics during testing."""
 
     def __init__(

@@ -6,7 +6,7 @@ from lightning import Callback
 from omegaconf import DictConfig
 
 
-class NormalizationCallback(Callback):
+class DenormalizationCallback(Callback):
     """Base callback providing denormalization helpers for model outputs."""
 
     def __init__(self, normalization_config: DictConfig) -> None:

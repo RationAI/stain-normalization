@@ -9,7 +9,7 @@ import torch
 from lightning import LightningModule, Trainer
 from omegaconf import DictConfig
 
-from stain_normalization.callbacks._base import NormalizationCallback
+from stain_normalization.callbacks._base import DenormalizationCallback
 from stain_normalization.type_aliases import Outputs
 
 
@@ -33,7 +33,7 @@ class _SlideBuffers:
     count_buffer: np.memmap[Any, Any]
 
 
-class WSIAssembler(NormalizationCallback):
+class WSIAssembler(DenormalizationCallback):
     """Assembles predicted tiles back into whole-slide pyramid TIFFs."""
 
     def __init__(
