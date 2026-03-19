@@ -61,18 +61,18 @@ class WSIAssembler(DenormalizationCallback, MultiloaderLifecycle):
     def on_predict_dataloader_start(
         self, trainer: Trainer, pl_module: LightningModule, dataloader_idx: int
     ) -> None:
-        slide = trainer.datamodule.predict.slides[dataloader_idx]  # type: ignore[attr-defined]
+        slide = trainer.datamodule.predict.slides.iloc[dataloader_idx]  # type: ignore[attr-defined]
         meta = _SlideMeta(
-            path=slide["path"],
-            level=int(slide["level"]),
-            extent_x=int(slide["extent_x"]),
-            extent_y=int(slide["extent_y"]),
-            tile_extent_x=int(slide["tile_extent_x"]),
-            tile_extent_y=int(slide["tile_extent_y"]),
-            mpp_x=float(slide["mpp_x"]),
-            mpp_y=float(slide["mpp_y"]),
+            path=slide.path,
+            level=int(slide.level),
+            extent_x=int(slide.extent_x),
+            extent_y=int(slide.extent_y),
+            tile_extent_x=int(slide.tile_extent_x),
+            tile_extent_y=int(slide.tile_extent_y),
+            mpp_x=float(slide.mpp_x),
+            mpp_y=float(slide.mpp_y),
         )
-        slide_name = Path(slide["path"]).stem
+        slide_name = Path(slide.path).stem
         self._open_slide(slide_name, meta)
 
     def on_predict_dataloader_end(

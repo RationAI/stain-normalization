@@ -36,11 +36,11 @@ class TrainDataset(MetaTiledSlides[Sample]):
         return (
             _TrainSlideTiles(
                 slide,
-                tiles=self.filter_tiles_by_slide(slide["id"]),
+                tiles=self.filter_tiles_by_slide(slide.id),
                 modify=self.modify,
                 normalize=self.normalize,
             )
-            for slide in self.slides
+            for _, slide in self.slides.iterrows()
         )
 
 
@@ -54,10 +54,10 @@ class _TrainSlideTiles(Dataset[Sample]):
     ) -> None:
         super().__init__()
         self.slide_tiles = OpenSlideTilesDataset(
-            slide_path=slide_metadata["path"],
-            level=slide_metadata["level"],
-            tile_extent_x=slide_metadata["tile_extent_x"],
-            tile_extent_y=slide_metadata["tile_extent_y"],
+            slide_path=slide_metadata.path,
+            level=slide_metadata.level,
+            tile_extent_x=slide_metadata.tile_extent_x,
+            tile_extent_y=slide_metadata.tile_extent_y,
             tiles=tiles,
         )
         self.modify = modify
