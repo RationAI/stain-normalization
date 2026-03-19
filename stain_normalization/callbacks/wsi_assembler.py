@@ -8,6 +8,7 @@ import numpy as np
 import torch
 from lightning import LightningModule, Trainer
 from omegaconf import DictConfig
+from rationai.mlkit.lightning.callbacks import MultiloaderLifecycle
 
 from stain_normalization.callbacks._base import DenormalizationCallback
 from stain_normalization.type_aliases import Outputs
@@ -33,8 +34,12 @@ class _SlideBuffers:
     count_buffer: np.memmap[Any, Any]
 
 
-class WSIAssembler(DenormalizationCallback):
-    """Assembles predicted tiles back into whole-slide pyramid TIFFs."""
+class WSIAssembler(DenormalizationCallback, MultiloaderLifecycle):
+    """Assembles predicted tiles back into whole-slide pyramid TIFFs.
+
+    Uses one dataloader per slide (via MultiloaderLifecycle) — buffers are
+    opened on dataloader start and saved/freed on dataloader end.
+    """
 
     def __init__(
         self,
@@ -42,35 +47,41 @@ class WSIAssembler(DenormalizationCallback):
         normalization_config: DictConfig,
         temp_dir: str | Path | None = None,
     ) -> None:
-        super().__init__(normalization_config)
+        DenormalizationCallback.__init__(self, normalization_config)
+        MultiloaderLifecycle.__init__(self)
         self.output_dir = Path(output_dir)
         self.temp_dir = str(temp_dir) if temp_dir else None
-        self._slide_meta: dict[str, _SlideMeta] = {}
         self._active: _SlideBuffers | None = None
         self._active_name: str | None = None
         self._failed_slides: list[str] = []
 
     def on_predict_start(self, trainer: Trainer, pl_module: LightningModule) -> None:
         self.output_dir.mkdir(parents=True, exist_ok=True)
-        slides_df = trainer.datamodule.predict.slides  # type: ignore[attr-defined]  # Lightning stub gap
 
-        # Cache metadata only — buffers are opened lazily per slide
-        for _, row in slides_df.iterrows():
-            name = Path(row.path).stem
-            self._slide_meta[name] = _SlideMeta(
-                path=row.path,
-                level=int(row.level),
-                extent_x=int(row.extent_x),
-                extent_y=int(row.extent_y),
-                tile_extent_x=int(row.tile_extent_x),
-                tile_extent_y=int(row.tile_extent_y),
-                mpp_x=float(row.mpp_x),
-                mpp_y=float(row.mpp_y),
-            )
+    def on_predict_dataloader_start(
+        self, trainer: Trainer, pl_module: LightningModule, dataloader_idx: int
+    ) -> None:
+        slide = trainer.datamodule.predict.slides[dataloader_idx]  # type: ignore[attr-defined]
+        meta = _SlideMeta(
+            path=slide["path"],
+            level=int(slide["level"]),
+            extent_x=int(slide["extent_x"]),
+            extent_y=int(slide["extent_y"]),
+            tile_extent_x=int(slide["tile_extent_x"]),
+            tile_extent_y=int(slide["tile_extent_y"]),
+            mpp_x=float(slide["mpp_x"]),
+            mpp_y=float(slide["mpp_y"]),
+        )
+        slide_name = Path(slide["path"]).stem
+        self._open_slide(slide_name, meta)
 
-    def _open_slide(self, slide_name: str) -> None:
+    def on_predict_dataloader_end(
+        self, trainer: Trainer, pl_module: LightningModule, dataloader_idx: int
+    ) -> None:
+        self._close_slide()
+
+    def _open_slide(self, slide_name: str, meta: _SlideMeta) -> None:
         """Allocate memmap buffers for one slide."""
-        meta = self._slide_meta[slide_name]
         h, w = meta.extent_y, meta.extent_x
 
         tmp = tempfile.TemporaryDirectory(
@@ -126,20 +137,8 @@ class WSIAssembler(DenormalizationCallback):
         dataloader_idx: int = 0,
     ) -> None:
         for b in range(len(outputs)):
-            metadata = batch[1][b]
-            slide_name = metadata["slide_name"]
-
-            if slide_name not in self._slide_meta:
-                raise ValueError(
-                    f"Slide '{slide_name}' not found in predict dataset metadata. "
-                    f"Available: {list(self._slide_meta.keys())}"
-                )
-
-            if slide_name != self._active_name:
-                self._close_slide()
-                self._open_slide(slide_name)
-
             tile = self.tensor_to_image(outputs[b])
+            metadata = batch[1][b]
             x, y = (int(v) for v in metadata["xy"].split("_"))
             self._place_tile(tile, x, y)
 
@@ -176,12 +175,11 @@ class WSIAssembler(DenormalizationCallback):
         sb.count_buffer[y : y + h, x : x + w] = count + 1
 
     def on_predict_end(self, trainer: Trainer, pl_module: LightningModule) -> None:
-        self._close_slide()
         if self._failed_slides:
             print(
-                f"WARNING: Failed to save {len(self._failed_slides)} slide(s): {self._failed_slides}"
+                f"WARNING: Failed to save {len(self._failed_slides)} slide(s): "
+                f"{self._failed_slides}"
             )
-        self._slide_meta.clear()
 
     def _save_slide(self, slide_name: str, sb: _SlideBuffers) -> None:
         # Imported here — module-level import causes OpenSlide segfault (libtiff conflict).

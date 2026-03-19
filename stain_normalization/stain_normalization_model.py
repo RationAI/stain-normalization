@@ -60,7 +60,7 @@ class StainNormalizationModel(LightningModule):
             on_epoch=True,
         )
 
-    def test_step(self, batch: PredictBatch) -> Outputs:
+    def test_step(self, batch: PredictBatch, batch_idx: int = 0, dataloader_idx: int = 0) -> Outputs:
         inputs, data = batch
         outputs = self(inputs)
         targets = stack([item["original_image_tensor"] for item in data]).to(
@@ -74,7 +74,7 @@ class StainNormalizationModel(LightningModule):
         )
         return outputs
 
-    def predict_step(self, batch: PredictBatch, batch_idx: int) -> Outputs:
+    def predict_step(self, batch: PredictBatch, batch_idx: int = 0, dataloader_idx: int = 0) -> Outputs:
         inputs = batch[0]
         return self(inputs)
 

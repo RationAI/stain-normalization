@@ -64,8 +64,8 @@ class _PredictSlideTiles(Dataset[PredictSample]):
     def __getitem__(self, idx: int) -> PredictSample:
         input_image_255 = self.slide_tiles[idx]
         slide_name = self.slide_tiles.slide_path.stem
-        x = self.slide_tiles.tiles.iloc[idx]["x"]
-        y = self.slide_tiles.tiles.iloc[idx]["y"]
+        tile = self.slide_tiles.tiles[idx]
+        x, y = tile["x"], tile["y"]
 
         input_image = input_image_255 / 255.0
 

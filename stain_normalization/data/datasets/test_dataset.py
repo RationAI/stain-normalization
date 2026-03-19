@@ -70,8 +70,8 @@ class _TestSlideTiles(Dataset[PredictSample]):
     def __getitem__(self, idx: int) -> PredictSample:
         original_image_255 = self.slide_tiles[idx]
         slide_name = self.slide_tiles.slide_path.stem
-        x = self.slide_tiles.tiles.iloc[idx]["x"]
-        y = self.slide_tiles.tiles.iloc[idx]["y"]
+        tile = self.slide_tiles.tiles[idx]
+        x, y = tile["x"], tile["y"]
 
         # Create "wrong" image to use as input. Outputs image in float 0-1
         modified_image_raw = self.modify(image=original_image_255)["image"]

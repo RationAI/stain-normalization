@@ -23,14 +23,14 @@ class TilesExport(DenormalizationCallback):
         self.output_dir.mkdir(parents=True, exist_ok=True)
         self.n_first = n_first
         self.sample_rate = sample_rate
-        self._tile_count: dict[str, int] = {}
+        self._global_count: int = 0
 
     def tensor_to_image(self, tensor: torch.Tensor) -> Image.Image:  # type: ignore[override]  # intentional: PIL Image is not subtype of ndarray
         return Image.fromarray(super().tensor_to_image(tensor))
 
-    def _should_save(self, slide_name: str) -> bool:
-        count = self._tile_count.get(slide_name, 0)
-        self._tile_count[slide_name] = count + 1
+    def _should_save(self) -> bool:
+        count = self._global_count
+        self._global_count += 1
         if count < self.n_first:
             return True
         return torch.rand(1).item() < self.sample_rate
@@ -47,7 +47,7 @@ class TilesExport(DenormalizationCallback):
         _, data = batch
         for b in range(len(outputs)):
             slide_name = data[b]["slide_name"]
-            if not self._should_save(slide_name):
+            if not self._should_save():
                 continue
 
             xy = data[b]["xy"]
@@ -76,7 +76,7 @@ class TilesExport(DenormalizationCallback):
         _, data = batch
         for b in range(len(outputs)):
             slide_name = data[b]["slide_name"]
-            if not self._should_save(slide_name):
+            if not self._should_save():
                 continue
 
             xy = data[b]["xy"]
