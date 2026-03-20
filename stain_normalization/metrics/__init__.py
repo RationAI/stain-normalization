@@ -9,7 +9,6 @@ from stain_normalization.metrics.torch_metrics import (
     MeanEosinDistance,
     MeanHematoxylinDistance,
     MeanLabPSNR,
-
     MeanPCC,
 )
 from stain_normalization.metrics.vector_metrics import (

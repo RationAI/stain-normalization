@@ -43,16 +43,15 @@ class StainNormalizationModel(LightningModule):
         )
         self.val_metrics = val_metrics.clone(prefix="validation/")
 
-        denorm = dict(denormalize_mean=normalize_mean, denormalize_std=normalize_std)
         self.test_metrics = MetricCollection(
             {
                 "ssim": StructuralSimilarityIndexMeasure(),
                 "l1": MeanAbsoluteError(),
                 "pcc": MeanPCC(),
-                "d_hematoxylin": MeanHematoxylinDistance(**denorm),
-                "d_eosin": MeanEosinDistance(**denorm),
-                "brightness": MeanBrightness(**denorm),
-                "lab_psnr": MeanLabPSNR(**denorm),
+                "d_hematoxylin": MeanHematoxylinDistance(normalize_mean, normalize_std),
+                "d_eosin": MeanEosinDistance(normalize_mean, normalize_std),
+                "brightness": MeanBrightness(normalize_mean, normalize_std),
+                "lab_psnr": MeanLabPSNR(normalize_mean, normalize_std),
             },
             prefix="test/",
         )

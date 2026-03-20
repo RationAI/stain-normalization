@@ -40,7 +40,9 @@ class _DenormalizingMetric(Metric):
     def _denormalize(self, tensor: Tensor) -> Tensor:
         if self.denorm_mean is None:
             return tensor
-        return tensor * self.denorm_std.to(tensor.device) + self.denorm_mean.to(tensor.device)
+        mean: Tensor = self.denorm_mean  # type: ignore[assignment]
+        std: Tensor = self.denorm_std  # type: ignore[assignment]
+        return tensor * std.to(tensor.device) + mean.to(tensor.device)
 
 
 # --- Stain vector metrics (numpy-based) ---
@@ -52,7 +54,14 @@ class _BaseStainDistance(_DenormalizingMetric):
     Converts tensors to numpy for stain vector estimation.
     """
 
-    def __init__(self, denormalize_mean: list[float], denormalize_std: list[float]) -> None:
+    distance_sum: Tensor
+    count: Tensor
+
+    def __init__(
+        self,
+        denormalize_mean: list[float] | None = None,
+        denormalize_std: list[float] | None = None,
+    ) -> None:
         super().__init__(denormalize_mean, denormalize_std)
         self.add_state("distance_sum", default=torch.tensor(0.0), dist_reduce_fx="sum")
         self.add_state("count", default=torch.tensor(0), dist_reduce_fx="sum")
@@ -101,14 +110,23 @@ class MeanBrightness(_DenormalizingMetric):
     Uses kornia for GPU-based RGB to Lab conversion.
     """
 
-    def __init__(self, denormalize_mean: list[float], denormalize_std: list[float]) -> None:
+    brightness_sum: Tensor
+    count: Tensor
+
+    def __init__(
+        self,
+        denormalize_mean: list[float] | None = None,
+        denormalize_std: list[float] | None = None,
+    ) -> None:
         super().__init__(denormalize_mean, denormalize_std)
-        self.add_state("brightness_sum", default=torch.tensor(0.0), dist_reduce_fx="sum")
+        self.add_state(
+            "brightness_sum", default=torch.tensor(0.0), dist_reduce_fx="sum"
+        )
         self.add_state("count", default=torch.tensor(0), dist_reduce_fx="sum")
 
     def update(self, preds: Tensor, target: Tensor) -> None:
         denormed = self._denormalize(preds).clamp(0, 1)
-        lab = rgb_to_lab(denormed) 
+        lab = rgb_to_lab(denormed)
         self.brightness_sum += lab[:, 0].mean()
         self.count += 1
 
@@ -125,7 +143,14 @@ class MeanLabPSNR(_DenormalizingMetric):
     torchmetrics for PSNR computation.
     """
 
-    def __init__(self, denormalize_mean: list[float], denormalize_std: list[float]) -> None:
+    psnr_sum: Tensor
+    count: Tensor
+
+    def __init__(
+        self,
+        denormalize_mean: list[float] | None = None,
+        denormalize_std: list[float] | None = None,
+    ) -> None:
         super().__init__(denormalize_mean, denormalize_std)
         self.add_state("psnr_sum", default=torch.tensor(0.0), dist_reduce_fx="sum")
         self.add_state("count", default=torch.tensor(0), dist_reduce_fx="sum")
@@ -152,6 +177,9 @@ class MeanPCC(Metric):
 
     Operates on raw normalized tensors (no denormalization needed).
     """
+
+    pcc_sum: Tensor
+    count: Tensor
 
     def __init__(self) -> None:
         super().__init__()
