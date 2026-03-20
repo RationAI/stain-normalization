@@ -50,6 +50,8 @@ model:
   lambda_l1: 0.2
   lambda_lum: 0.2
   lambda_gdl: 0.1
+  normalize_mean: ${data.test.normalize.mean}
+  normalize_std: ${data.test.normalize.std}
 
 trainer:
   enable_checkpointing: True
@@ -60,7 +62,6 @@ trainer:
   callbacks:
     - ${callbacks.model_checkpoint}
     - ${callbacks.early_stopping}
-    - ${callbacks.analysis_export}
 
 data:
   batch_size: 64

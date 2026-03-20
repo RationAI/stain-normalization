@@ -18,6 +18,7 @@ dependencies = [
     "scikit-image>=0.25.2",
     "rationai-staining @ git+https://gitlab.ics.muni.cz/rationai/digital-pathology/libraries/staining.git",
     "openslide-python>=1.4.3",
+    "kornia>=0.8.2",
 ]
 
 [dependency-groups]

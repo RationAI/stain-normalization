@@ -6,6 +6,13 @@ from torchmetrics import MetricCollection
 from torchmetrics.image import StructuralSimilarityIndexMeasure
 from torchmetrics.regression import MeanAbsoluteError
 
+from stain_normalization.metrics.torch_metrics import (
+    MeanBrightness,
+    MeanEosinDistance,
+    MeanHematoxylinDistance,
+    MeanLabPSNR,
+    MeanPCC,
+)
 from stain_normalization.modeling import L1SSIMLoss, UNet
 from stain_normalization.type_aliases import Batch, Outputs, PredictBatch
 
@@ -18,6 +25,8 @@ class StainNormalizationModel(LightningModule):
         lambda_l1: float = 0.2,
         lambda_lum: float = 0.2,
         lambda_gdl: float = 0.1,
+        normalize_mean: list[float] | None = None,
+        normalize_std: list[float] | None = None,
     ) -> None:
         super().__init__()
         self.lr = lr
@@ -29,11 +38,24 @@ class StainNormalizationModel(LightningModule):
             lambda_gdl=lambda_gdl,
         )
 
-        self.val_metrics = MetricCollection(
+        val_metrics = MetricCollection(
             {"ssim": StructuralSimilarityIndexMeasure(), "l1": MeanAbsoluteError()}
         )
-        self.test_metrics = self.val_metrics.clone(prefix="test/")
-        self.val_metrics.prefix = "validation/"
+        self.val_metrics = val_metrics.clone(prefix="validation/")
+
+        denorm = dict(denormalize_mean=normalize_mean, denormalize_std=normalize_std)
+        self.test_metrics = MetricCollection(
+            {
+                "ssim": StructuralSimilarityIndexMeasure(),
+                "l1": MeanAbsoluteError(),
+                "pcc": MeanPCC(),
+                "d_hematoxylin": MeanHematoxylinDistance(**denorm),
+                "d_eosin": MeanEosinDistance(**denorm),
+                "brightness": MeanBrightness(**denorm),
+                "lab_psnr": MeanLabPSNR(**denorm),
+            },
+            prefix="test/",
+        )
 
     def forward(self, x: Tensor) -> Outputs:
         return self.unet(x)
