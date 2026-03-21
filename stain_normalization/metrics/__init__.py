@@ -6,10 +6,9 @@ from stain_normalization.metrics.image_metrics import (
 )
 from stain_normalization.metrics.torch_metrics import (
     MeanBrightness,
-    MeanEosinDistance,
-    MeanHematoxylinDistance,
     MeanLabPSNR,
     MeanPCC,
+    MeanStainDistance,
 )
 from stain_normalization.metrics.vector_metrics import (
     compare_vectors,
@@ -18,11 +17,9 @@ from stain_normalization.metrics.vector_metrics import (
 
 __all__ = [
     "MeanBrightness",
-    "MeanEosinDistance",
-    "MeanHematoxylinDistance",
     "MeanLabPSNR",
-    "MeanNMI",
     "MeanPCC",
+    "MeanStainDistance",
     "compare_vectors",
     "compute_lab_brightness_psnr",
     "compute_mean_brightness",
