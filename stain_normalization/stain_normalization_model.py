@@ -6,6 +6,14 @@ from torchmetrics import MetricCollection
 from torchmetrics.image import StructuralSimilarityIndexMeasure
 from torchmetrics.regression import MeanAbsoluteError
 
+import torch
+
+from stain_normalization.metrics.torch_metrics import (
+    MeanBrightness,
+    MeanLabPSNR,
+    MeanPCC,
+    MeanStainDistance,
+)
 from stain_normalization.modeling import L1SSIMLoss, UNet
 from stain_normalization.type_aliases import Batch, Outputs, PredictBatch
 
@@ -18,6 +26,8 @@ class StainNormalizationModel(LightningModule):
         lambda_l1: float = 0.2,
         lambda_lum: float = 0.2,
         lambda_gdl: float = 0.1,
+        normalize_mean: list[float] | None = None,
+        normalize_std: list[float] | None = None,
     ) -> None:
         super().__init__()
         self.lr = lr
@@ -29,14 +39,43 @@ class StainNormalizationModel(LightningModule):
             lambda_gdl=lambda_gdl,
         )
 
-        self.val_metrics = MetricCollection(
+        if normalize_mean is not None and normalize_std is not None:
+            self.register_buffer(
+                "_denorm_mean", torch.tensor(normalize_mean).view(1, 3, 1, 1)
+            )
+            self.register_buffer(
+                "_denorm_std", torch.tensor(normalize_std).view(1, 3, 1, 1)
+            )
+        else:
+            self.register_buffer("_denorm_mean", None)
+            self.register_buffer("_denorm_std", None)
+
+        val_metrics = MetricCollection(
             {"ssim": StructuralSimilarityIndexMeasure(), "l1": MeanAbsoluteError()}
         )
-        self.test_metrics = self.val_metrics.clone(prefix="test/")
-        self.val_metrics.prefix = "validation/"
+        self.val_metrics = val_metrics.clone(prefix="validation/")
+
+        self.test_metrics = MetricCollection(
+            {
+                "ssim": StructuralSimilarityIndexMeasure(),
+                "l1": MeanAbsoluteError(),
+                "pcc": MeanPCC(),
+                "stain": MeanStainDistance(),
+                "brightness": MeanBrightness(),
+                "lab_psnr": MeanLabPSNR(),
+            },
+            prefix="test/",
+        )
 
     def forward(self, x: Tensor) -> Outputs:
         return self.unet(x)
+
+    def _denormalize(self, tensor: Tensor) -> Tensor:
+        if self._denorm_mean is None:
+            return tensor
+        mean: Tensor = self._denorm_mean  # type: ignore[assignment]
+        std: Tensor = self._denorm_std  # type: ignore[assignment]
+        return tensor * std + mean
 
     def training_step(self, batch: Batch) -> Tensor:
         inputs, targets = batch
@@ -60,13 +99,17 @@ class StainNormalizationModel(LightningModule):
             on_epoch=True,
         )
 
-    def test_step(self, batch: PredictBatch, batch_idx: int = 0, dataloader_idx: int = 0) -> Outputs:
+    def test_step(
+        self, batch: PredictBatch, batch_idx: int = 0, dataloader_idx: int = 0
+    ) -> Outputs:
         inputs, data = batch
         outputs = self(inputs)
         targets = stack([item["original_image_tensor"] for item in data]).to(
             outputs.device
         )
-        self.test_metrics.update(outputs, targets)
+        denormed_outputs = self._denormalize(outputs)
+        denormed_targets = self._denormalize(targets)
+        self.test_metrics.update(denormed_outputs, denormed_targets)
         self.log_dict(
             self.test_metrics,
             batch_size=len(inputs),
@@ -74,7 +117,9 @@ class StainNormalizationModel(LightningModule):
         )
         return outputs
 
-    def predict_step(self, batch: PredictBatch, batch_idx: int = 0, dataloader_idx: int = 0) -> Outputs:
+    def predict_step(
+        self, batch: PredictBatch, batch_idx: int = 0, dataloader_idx: int = 0
+    ) -> Outputs:
         inputs = batch[0]
         return self(inputs)
 
