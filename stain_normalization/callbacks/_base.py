@@ -3,30 +3,15 @@ from typing import Any
 import numpy as np
 import torch
 from lightning import Callback
-from omegaconf import DictConfig
 
 
-class DenormalizationCallback(Callback):
-    """Base callback providing denormalization helpers for model outputs."""
+class ImageCallback(Callback):
+    """Base callback providing tensor-to-image conversion.
 
-    def __init__(self, normalization_config: DictConfig) -> None:
-        super().__init__()
-        self.mean = torch.tensor(normalization_config.mean).view(3, 1, 1)
-        self.std = torch.tensor(normalization_config.std).view(3, 1, 1)
+    Expects denormalized [0,1] tensors (denormalization is done in the model).
+    """
 
-    def denormalize(self, tensor: torch.Tensor) -> torch.Tensor:
-        """Reverse normalization: tensor → [0, 1] float."""
-        device = tensor.device
-        return (tensor * self.std.to(device)) + self.mean.to(device)
-
-    def tensor_to_image(self, tensor: torch.Tensor) -> np.ndarray[Any, Any]:
-        """Convert model output tensor to uint8 HWC numpy array."""
-        return (
-            self.denormalize(tensor)
-            .clamp(0, 1)
-            .mul(255)
-            .byte()
-            .permute(1, 2, 0)
-            .cpu()
-            .numpy()
-        )
+    @staticmethod
+    def tensor_to_image(tensor: torch.Tensor) -> np.ndarray[Any, Any]:
+        """Convert [0,1] CHW tensor to uint8 HWC numpy array."""
+        return tensor.mul(255).byte().permute(1, 2, 0).cpu().numpy()

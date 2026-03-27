@@ -3,22 +3,20 @@ from typing import Any
 
 import torch
 from lightning import LightningModule, Trainer
-from omegaconf import DictConfig
 from PIL import Image
 
-from stain_normalization.callbacks._base import DenormalizationCallback
+from stain_normalization.callbacks._base import ImageCallback
 from stain_normalization.type_aliases import Outputs
 
 
-class TilesExport(DenormalizationCallback):
+class TilesExport(ImageCallback):
     def __init__(
         self,
         output_dir: str | Path,
-        normalization_config: DictConfig,
         n_first: int = 10,
         sample_rate: float = 0.0005,
     ) -> None:
-        super().__init__(normalization_config)
+        super().__init__()
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(parents=True, exist_ok=True)
         self.n_first = n_first

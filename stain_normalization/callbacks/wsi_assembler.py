@@ -7,10 +7,10 @@ from typing import Any
 import numpy as np
 import torch
 from lightning import LightningModule, Trainer
-from omegaconf import DictConfig
+
 from rationai.mlkit.lightning.callbacks import MultiloaderLifecycle
 
-from stain_normalization.callbacks._base import DenormalizationCallback
+from stain_normalization.callbacks._base import ImageCallback
 from stain_normalization.type_aliases import Outputs
 
 
@@ -34,7 +34,7 @@ class _SlideBuffers:
     count_buffer: np.memmap[Any, Any]
 
 
-class WSIAssembler(DenormalizationCallback, MultiloaderLifecycle):
+class WSIAssembler(ImageCallback, MultiloaderLifecycle):
     """Assembles predicted tiles back into whole-slide pyramid TIFFs.
 
     Uses one dataloader per slide (via MultiloaderLifecycle) — buffers are
@@ -44,10 +44,9 @@ class WSIAssembler(DenormalizationCallback, MultiloaderLifecycle):
     def __init__(
         self,
         output_dir: str | Path,
-        normalization_config: DictConfig,
         temp_dir: str | Path | None = None,
     ) -> None:
-        DenormalizationCallback.__init__(self, normalization_config)
+        ImageCallback.__init__(self)
         MultiloaderLifecycle.__init__(self)
         self.output_dir = Path(output_dir)
         self.temp_dir = str(temp_dir) if temp_dir else None
