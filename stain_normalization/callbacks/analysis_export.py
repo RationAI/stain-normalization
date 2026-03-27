@@ -4,20 +4,17 @@ from typing import Any
 import mlflow
 import torch
 from lightning import LightningModule, Trainer
-from omegaconf import DictConfig
 
 from stain_normalization.analysis.analyzer import StainAnalyzer
-from stain_normalization.callbacks._base import DenormalizationCallback
+from stain_normalization.callbacks._base import ImageCallback
 from stain_normalization.type_aliases import Outputs
 
 
-class AnalysisExport(DenormalizationCallback):
+class AnalysisExport(ImageCallback):
     """Exports analysis metrics during testing."""
 
-    def __init__(
-        self, output_dir: str | Path, normalization_config: DictConfig
-    ) -> None:
-        super().__init__(normalization_config)
+    def __init__(self, output_dir: str | Path) -> None:
+        super().__init__()
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
