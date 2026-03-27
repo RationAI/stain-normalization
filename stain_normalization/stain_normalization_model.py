@@ -67,7 +67,9 @@ class StainNormalizationModel(LightningModule):
         return self.unet(x)
 
     def _denormalize(self, tensor: Tensor) -> Tensor:
-        return tensor * self._denorm_std + self._denorm_mean
+        std: Tensor = self._denorm_std  # type: ignore[assignment]
+        mean: Tensor = self._denorm_mean  # type: ignore[assignment]
+        return tensor * std + mean
 
     def training_step(self, batch: Batch) -> Tensor:
         inputs, targets = batch
