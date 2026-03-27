@@ -77,7 +77,7 @@ class MeanBrightness(Metric):
         self.add_state("count", default=torch.tensor(0), dist_reduce_fx="sum")
 
     def update(self, preds: Tensor, target: Tensor) -> None:
-        lab = rgb_to_lab(preds.clamp(0, 1))
+        lab = rgb_to_lab(preds)
         self.brightness_sum += lab[:, 0].mean()
         self.count += 1
 
@@ -103,11 +103,11 @@ class MeanLabPSNR(Metric):
         self.add_state("count", default=torch.tensor(0), dist_reduce_fx="sum")
 
     def update(self, preds: Tensor, target: Tensor) -> None:
-        pred_lab = rgb_to_lab(preds.clamp(0, 1))
-        target_lab = rgb_to_lab(target.clamp(0, 1))
+        pred_lab = rgb_to_lab(preds)
+        target_lab = rgb_to_lab(target)
 
-        pred_l = pred_lab[:, 0:1]
-        target_l = target_lab[:, 0:1]
+        pred_l = pred_lab[:, :1]
+        target_l = target_lab[:, :1]
 
         self.psnr_sum += peak_signal_noise_ratio(pred_l, target_l, data_range=100.0)
         self.count += 1
@@ -133,16 +133,16 @@ class MeanPCC(Metric):
         self.add_state("count", default=torch.tensor(0), dist_reduce_fx="sum")
 
     def update(self, preds: Tensor, target: Tensor) -> None:
-        for i in range(preds.shape[0]):
-            x = preds[i].flatten().float()
-            y = target[i].flatten().float()
-
-            if x.std() == 0 or y.std() == 0:
-                continue
-
-            pcc = torch.corrcoef(torch.stack([x, y]))[0, 1]
-            self.pcc_sum += pcc
-            self.count += 1
+        x = preds.flatten(1).float()
+        y = target.flatten(1).float()
+        mean_x = x.mean(dim=1, keepdim=True)
+        mean_y = y.mean(dim=1, keepdim=True)
+        dx, dy = x - mean_x, y - mean_y
+        num = (dx * dy).sum(dim=1)
+        den = dx.norm(dim=1) * dy.norm(dim=1)
+        valid = den > 0
+        self.pcc_sum += (num[valid] / den[valid]).sum()
+        self.count += valid.sum()
 
     def compute(self) -> Tensor:
         if self.count == 0:

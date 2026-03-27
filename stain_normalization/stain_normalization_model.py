@@ -21,13 +21,13 @@ from stain_normalization.type_aliases import Batch, Outputs, PredictBatch
 class StainNormalizationModel(LightningModule):
     def __init__(
         self,
+        normalize_mean: list[float],
+        normalize_std: list[float],
         lr: float = 1e-4,
         lambda_dssim: float = 0.6,
         lambda_l1: float = 0.2,
         lambda_lum: float = 0.2,
         lambda_gdl: float = 0.1,
-        normalize_mean: list[float] | None = None,
-        normalize_std: list[float] | None = None,
     ) -> None:
         super().__init__()
         self.lr = lr
@@ -39,16 +39,12 @@ class StainNormalizationModel(LightningModule):
             lambda_gdl=lambda_gdl,
         )
 
-        if normalize_mean is not None and normalize_std is not None:
-            self.register_buffer(
-                "_denorm_mean", torch.tensor(normalize_mean).view(1, 3, 1, 1)
-            )
-            self.register_buffer(
-                "_denorm_std", torch.tensor(normalize_std).view(1, 3, 1, 1)
-            )
-        else:
-            self.register_buffer("_denorm_mean", None)
-            self.register_buffer("_denorm_std", None)
+        self.register_buffer(
+            "_denorm_mean", torch.tensor(normalize_mean).view(1, 3, 1, 1)
+        )
+        self.register_buffer(
+            "_denorm_std", torch.tensor(normalize_std).view(1, 3, 1, 1)
+        )
 
         val_metrics = MetricCollection(
             {"ssim": StructuralSimilarityIndexMeasure(), "l1": MeanAbsoluteError()}
@@ -71,11 +67,7 @@ class StainNormalizationModel(LightningModule):
         return self.unet(x)
 
     def _denormalize(self, tensor: Tensor) -> Tensor:
-        if self._denorm_mean is None:
-            return tensor
-        mean: Tensor = self._denorm_mean  # type: ignore[assignment]
-        std: Tensor = self._denorm_std  # type: ignore[assignment]
-        return tensor * std + mean
+        return tensor * self._denorm_std + self._denorm_mean
 
     def training_step(self, batch: Batch) -> Tensor:
         inputs, targets = batch
@@ -99,29 +91,27 @@ class StainNormalizationModel(LightningModule):
             on_epoch=True,
         )
 
-    def test_step(
-        self, batch: PredictBatch, batch_idx: int = 0, dataloader_idx: int = 0
-    ) -> Outputs:
+    def test_step(self, batch: PredictBatch, batch_idx: int = 0) -> Outputs:
         inputs, data = batch
         outputs = self(inputs)
         targets = stack([item["original_image_tensor"] for item in data]).to(
             outputs.device
         )
-        denormed_outputs = self._denormalize(outputs)
-        denormed_targets = self._denormalize(targets)
+        denormed_outputs = self._denormalize(outputs).clamp(0, 1)
+        denormed_targets = self._denormalize(targets).clamp(0, 1)
         self.test_metrics.update(denormed_outputs, denormed_targets)
         self.log_dict(
             self.test_metrics,
             batch_size=len(inputs),
             on_epoch=True,
         )
-        return outputs
+        return denormed_outputs
 
     def predict_step(
         self, batch: PredictBatch, batch_idx: int = 0, dataloader_idx: int = 0
     ) -> Outputs:
         inputs = batch[0]
-        return self(inputs)
+        return self._denormalize(self(inputs)).clamp(0, 1)
 
     def configure_optimizers(self) -> Optimizer:
         return Adam(self.parameters(), lr=self.lr)

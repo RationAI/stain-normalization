@@ -24,19 +24,16 @@ callbacks:
   tiles_export:
     _target_: stain_normalization.callbacks.TilesExport
     output_dir: ${output_dir}
-    normalization_config: ${data.test.normalize}
     n_first: 10
     sample_rate: 0.0005  # for test dataset cca 100 tiles
 
   analysis_export:
     _target_: stain_normalization.callbacks.AnalysisExport
     output_dir: ${output_dir}
-    normalization_config: ${data.test.normalize}
 
   wsi_assembler:
     _target_: stain_normalization.callbacks.WSIAssembler
     output_dir: ${output_dir}
-    normalization_config: ${data.predict.normalize}
 
   early_stopping:
     _target_: lightning.pytorch.callbacks.EarlyStopping
