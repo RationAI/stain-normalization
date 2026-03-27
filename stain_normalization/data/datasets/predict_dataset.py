@@ -35,7 +35,7 @@ class PredictDataset(MetaTiledSlides[PredictSample]):
                 tiles=self.filter_tiles_by_slide(slide["id"]),
                 normalize=self.normalize,
             )
-            for slide in self.slides
+            for _, slide in self.slides.iterrows()
         )
 
 
@@ -48,10 +48,10 @@ class _PredictSlideTiles(Dataset[PredictSample]):
     ) -> None:
         super().__init__()
         self.slide_tiles = OpenSlideTilesDataset(
-            slide_path=slide_metadata["path"],
-            level=slide_metadata["level"],
-            tile_extent_x=slide_metadata["tile_extent_x"],
-            tile_extent_y=slide_metadata["tile_extent_y"],
+            slide_path=slide_metadata.path,
+            level=slide_metadata.level,
+            tile_extent_x=slide_metadata.tile_extent_x,
+            tile_extent_y=slide_metadata.tile_extent_y,
             tiles=tiles,
         )
 
@@ -64,8 +64,8 @@ class _PredictSlideTiles(Dataset[PredictSample]):
     def __getitem__(self, idx: int) -> PredictSample:
         input_image_255 = self.slide_tiles[idx]
         slide_name = self.slide_tiles.slide_path.stem
-        tile = self.slide_tiles.tiles[idx]
-        x, y = tile["x"], tile["y"]
+        x = self.slide_tiles.tiles.iloc[idx]["x"]
+        y = self.slide_tiles.tiles.iloc[idx]["y"]
 
         input_image = input_image_255 / 255.0
 
