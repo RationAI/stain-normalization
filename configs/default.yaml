@@ -23,17 +23,13 @@ callbacks:
   # opt-in callbacks — add to trainer.callbacks when needed
   tiles_export:
     _target_: stain_normalization.callbacks.TilesExport
-    output_dir: ${output_dir}
+    output_dir: ???
     n_first: 10
     sample_rate: 0.0005  # for test dataset cca 100 tiles
 
-  analysis_export:
-    _target_: stain_normalization.callbacks.AnalysisExport
-    output_dir: ${output_dir}
-
   wsi_assembler:
     _target_: stain_normalization.callbacks.WSIAssembler
-    output_dir: ${output_dir}
+    output_dir: ???
 
   early_stopping:
     _target_: lightning.pytorch.callbacks.EarlyStopping
@@ -71,6 +67,4 @@ metadata:
   description: ???
   hyperparams: ${model}
 
-
-output_dir: ???
 
