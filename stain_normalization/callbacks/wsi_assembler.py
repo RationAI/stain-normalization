@@ -10,7 +10,6 @@ from lightning import LightningModule, Trainer
 
 from rationai.mlkit.lightning.callbacks import MultiloaderLifecycle
 
-from stain_normalization.callbacks._base import ImageCallback
 from stain_normalization.type_aliases import Outputs
 
 
@@ -34,7 +33,7 @@ class _SlideBuffers:
     count_buffer: np.memmap[Any, Any]
 
 
-class WSIAssembler(ImageCallback, MultiloaderLifecycle):
+class WSIAssembler(MultiloaderLifecycle):
     """Assembles predicted tiles back into whole-slide pyramid TIFFs.
 
     Uses one dataloader per slide (via MultiloaderLifecycle) — buffers are
@@ -46,8 +45,7 @@ class WSIAssembler(ImageCallback, MultiloaderLifecycle):
         output_dir: str | Path,
         temp_dir: str | Path | None = None,
     ) -> None:
-        ImageCallback.__init__(self)
-        MultiloaderLifecycle.__init__(self)
+        super().__init__()
         self.output_dir = Path(output_dir)
         self.temp_dir = str(temp_dir) if temp_dir else None
         self._active: _SlideBuffers | None = None
@@ -136,7 +134,7 @@ class WSIAssembler(ImageCallback, MultiloaderLifecycle):
         dataloader_idx: int = 0,
     ) -> None:
         for b in range(len(outputs)):
-            tile = self.tensor_to_image(outputs[b])
+            tile = outputs[b].mul(255).byte().permute(1, 2, 0).cpu().numpy()
             metadata = batch[1][b]
             x, y = (int(v) for v in metadata["xy"].split("_"))
             self._place_tile(tile, x, y)

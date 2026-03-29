@@ -72,5 +72,5 @@ metadata:
   hyperparams: ${model}
 
 
-output_dir: ??? # ./data/outputs
+output_dir: ???
 

@@ -5,11 +5,11 @@ import torch
 from lightning import LightningModule, Trainer
 from PIL import Image
 
-from stain_normalization.callbacks._base import ImageCallback
+from lightning import Callback
 from stain_normalization.type_aliases import Outputs
 
 
-class TilesExport(ImageCallback):
+class TilesExport(Callback):
     def __init__(
         self,
         output_dir: str | Path,
@@ -23,8 +23,9 @@ class TilesExport(ImageCallback):
         self.sample_rate = sample_rate
         self._global_count: int = 0
 
-    def tensor_to_image(self, tensor: torch.Tensor) -> Image.Image:  # type: ignore[override]  # intentional: PIL Image is not subtype of ndarray
-        return Image.fromarray(super().tensor_to_image(tensor))
+    @staticmethod
+    def _tensor_to_image(tensor: torch.Tensor) -> Image.Image:
+        return Image.fromarray(tensor.mul(255).byte().permute(1, 2, 0).cpu().numpy())
 
     def _should_save(self) -> bool:
         count = self._global_count
@@ -52,7 +53,7 @@ class TilesExport(ImageCallback):
             slide_dir = self.output_dir / slide_name
             slide_dir.mkdir(parents=True, exist_ok=True)
 
-            self.tensor_to_image(outputs[b]).save(slide_dir / f"{xy}_predicted.png")
+            self._tensor_to_image(outputs[b]).save(slide_dir / f"{xy}_predicted.png")
 
             original_image = Image.fromarray(data[b]["original_image"].astype("uint8"))
             original_image.save(slide_dir / f"{xy}_original.png")
@@ -81,4 +82,4 @@ class TilesExport(ImageCallback):
             slide_dir = self.output_dir / slide_name
             slide_dir.mkdir(parents=True, exist_ok=True)
 
-            self.tensor_to_image(outputs[b]).save(slide_dir / f"{xy}.png")
+            self._tensor_to_image(outputs[b]).save(slide_dir / f"{xy}.png")

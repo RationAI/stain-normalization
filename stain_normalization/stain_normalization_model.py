@@ -69,7 +69,7 @@ class StainNormalizationModel(LightningModule):
     def _denormalize(self, tensor: Tensor) -> Tensor:
         std: Tensor = self._denorm_std  # type: ignore[assignment]
         mean: Tensor = self._denorm_mean  # type: ignore[assignment]
-        return tensor * std + mean
+        return (tensor * std + mean).clamp(0, 1)
 
     def training_step(self, batch: Batch) -> Tensor:
         inputs, targets = batch
@@ -99,8 +99,8 @@ class StainNormalizationModel(LightningModule):
         targets = stack([item["original_image_tensor"] for item in data]).to(
             outputs.device
         )
-        denormed_outputs = self._denormalize(outputs).clamp(0, 1)
-        denormed_targets = self._denormalize(targets).clamp(0, 1)
+        denormed_outputs = self._denormalize(outputs)
+        denormed_targets = self._denormalize(targets)
         self.test_metrics.update(denormed_outputs, denormed_targets)
         self.log_dict(
             self.test_metrics,
@@ -113,7 +113,7 @@ class StainNormalizationModel(LightningModule):
         self, batch: PredictBatch, batch_idx: int = 0, dataloader_idx: int = 0
     ) -> Outputs:
         inputs = batch[0]
-        return self._denormalize(self(inputs)).clamp(0, 1)
+        return self._denormalize(self(inputs))
 
     def configure_optimizers(self) -> Optimizer:
         return Adam(self.parameters(), lr=self.lr)
