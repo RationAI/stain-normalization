@@ -54,8 +54,16 @@ class MeanStainDistance(Metric):
                 self.e_count += 1
 
     def compute(self) -> Tensor | dict[str, Tensor]:
-        h = self.h_sum / self.h_count if self.h_count > 0 else torch.tensor(float("nan"))
-        e = self.e_sum / self.e_count if self.e_count > 0 else torch.tensor(float("nan"))
+        h = (
+            self.h_sum / self.h_count
+            if self.h_count > 0
+            else torch.tensor(float("nan"))
+        )
+        e = (
+            self.e_sum / self.e_count
+            if self.e_count > 0
+            else torch.tensor(float("nan"))
+        )
         if self.stain == "d_hematoxylin":
             return h
         if self.stain == "d_eosin":
