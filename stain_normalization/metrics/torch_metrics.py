@@ -15,7 +15,10 @@ def _tensor_to_uint8(tensor: Tensor) -> np.ndarray:
 
 
 class MeanStainDistance(Metric):
-    """Mean CIE76 Delta E for hematoxylin and eosin stain vectors.
+    """Mean CIE76 Delta E for a stain vector.
+
+    When stain=None, returns dict with both (can't be used with log_dict).
+    When stain="d_hematoxylin" or "d_eosin", returns single tensor (works with MetricCollection).
 
     Expects denormalized [0,1] tensors. Converts to numpy for stain vector estimation.
     """
@@ -25,8 +28,9 @@ class MeanStainDistance(Metric):
     e_sum: Tensor
     e_count: Tensor
 
-    def __init__(self) -> None:
+    def __init__(self, stain: str | None = None) -> None:
         super().__init__()
+        self.stain = stain
         self.add_state("h_sum", default=torch.tensor(0.0), dist_reduce_fx="sum")
         self.add_state("h_count", default=torch.tensor(0), dist_reduce_fx="sum")
         self.add_state("e_sum", default=torch.tensor(0.0), dist_reduce_fx="sum")
@@ -49,15 +53,14 @@ class MeanStainDistance(Metric):
                 self.e_sum += result["d_eosin"]
                 self.e_count += 1
 
-    def compute(self) -> dict[str, Tensor]:
-        return {
-            "d_hematoxylin": self.h_sum / self.h_count
-            if self.h_count > 0
-            else torch.tensor(float("nan")),
-            "d_eosin": self.e_sum / self.e_count
-            if self.e_count > 0
-            else torch.tensor(float("nan")),
-        }
+    def compute(self) -> Tensor | dict[str, Tensor]:
+        h = self.h_sum / self.h_count if self.h_count > 0 else torch.tensor(float("nan"))
+        e = self.e_sum / self.e_count if self.e_count > 0 else torch.tensor(float("nan"))
+        if self.stain == "d_hematoxylin":
+            return h
+        if self.stain == "d_eosin":
+            return e
+        return {"d_hematoxylin": h, "d_eosin": e}
 
 
 class MeanBrightness(Metric):

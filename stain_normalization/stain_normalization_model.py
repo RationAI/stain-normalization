@@ -56,9 +56,10 @@ class StainNormalizationModel(LightningModule):
                 "ssim": StructuralSimilarityIndexMeasure(),
                 "l1": MeanAbsoluteError(),
                 "pcc": MeanPCC(),
-                "stain": MeanStainDistance(),
                 "brightness": MeanBrightness(),
                 "lab_psnr": MeanLabPSNR(),
+                "d_hematoxylin": MeanStainDistance("d_hematoxylin"),
+                "d_eosin": MeanStainDistance("d_eosin"),
             },
             prefix="test/",
         )
