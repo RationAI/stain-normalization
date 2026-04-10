@@ -62,6 +62,7 @@ class StainNormalizationModel(LightningModule):
                 "d_eosin": MeanStainDistance("d_eosin"),
             },
             prefix="test/",
+            compute_groups=False,
         )
 
     def forward(self, x: Tensor) -> Outputs:
