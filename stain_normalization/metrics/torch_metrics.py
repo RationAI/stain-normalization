@@ -1,0 +1,161 @@
+import numpy as np
+import torch
+from kornia.color import rgb_to_lab
+from rationai.staining import estimate_stain_vectors
+from torch import Tensor
+from torchmetrics import Metric
+from torchmetrics.functional.image import peak_signal_noise_ratio
+
+from stain_normalization.metrics.vector_metrics import compare_vectors
+
+
+def _tensor_to_uint8(tensor: Tensor) -> np.ndarray:
+    """Convert CHW [0,1] tensor to HWC uint8 numpy array."""
+    return (tensor.clamp(0, 1).permute(1, 2, 0).cpu().numpy() * 255).astype(np.uint8)
+
+
+class MeanStainDistance(Metric):
+    """Mean CIE76 Delta E for a stain vector.
+
+    When stain=None, returns dict with both (can't be used with log_dict).
+    When stain="d_hematoxylin" or "d_eosin", returns single tensor (works with MetricCollection).
+
+    Expects denormalized [0,1] tensors. Converts to numpy for stain vector estimation.
+    """
+
+    h_sum: Tensor
+    h_count: Tensor
+    e_sum: Tensor
+    e_count: Tensor
+
+    def __init__(self, stain: str | None = None) -> None:
+        super().__init__()
+        self.stain = stain
+        self.add_state("h_sum", default=torch.tensor(0.0), dist_reduce_fx="sum")
+        self.add_state("h_count", default=torch.tensor(0), dist_reduce_fx="sum")
+        self.add_state("e_sum", default=torch.tensor(0.0), dist_reduce_fx="sum")
+        self.add_state("e_count", default=torch.tensor(0), dist_reduce_fx="sum")
+
+    def update(self, preds: Tensor, target: Tensor) -> None:
+        for i in range(preds.shape[0]):
+            pred_np = _tensor_to_uint8(preds[i])
+            target_np = _tensor_to_uint8(target[i])
+
+            pred_vecs = estimate_stain_vectors(pred_np)
+            target_vecs = estimate_stain_vectors(target_np)
+
+            result = compare_vectors(target_vecs, pred_vecs)
+
+            if not np.isnan(result["d_hematoxylin"]):
+                self.h_sum += result["d_hematoxylin"]
+                self.h_count += 1
+            if not np.isnan(result["d_eosin"]):
+                self.e_sum += result["d_eosin"]
+                self.e_count += 1
+
+    def compute(self) -> Tensor | dict[str, Tensor]:
+        h = (
+            self.h_sum / self.h_count
+            if self.h_count > 0
+            else torch.tensor(float("nan"))
+        )
+        e = (
+            self.e_sum / self.e_count
+            if self.e_count > 0
+            else torch.tensor(float("nan"))
+        )
+        if self.stain == "d_hematoxylin":
+            return h
+        if self.stain == "d_eosin":
+            return e
+        return {"d_hematoxylin": h, "d_eosin": e}
+
+
+class MeanBrightness(Metric):
+    """Mean L* brightness in CIE Lab color space.
+
+    Expects denormalized [0,1] tensors. Uses kornia for GPU-based RGB to Lab conversion.
+    """
+
+    brightness_sum: Tensor
+    count: Tensor
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.add_state(
+            "brightness_sum", default=torch.tensor(0.0), dist_reduce_fx="sum"
+        )
+        self.add_state("count", default=torch.tensor(0), dist_reduce_fx="sum")
+
+    def update(self, preds: Tensor, target: Tensor) -> None:
+        lab = rgb_to_lab(preds)
+        self.brightness_sum += lab[:, 0].mean()
+        self.count += 1
+
+    def compute(self) -> Tensor:
+        if self.count == 0:
+            return torch.tensor(float("nan"))
+        return self.brightness_sum / self.count
+
+
+class MeanLabPSNR(Metric):
+    """Mean PSNR on the L* channel in CIE Lab color space.
+
+    Expects denormalized [0,1] tensors. Uses kornia for RGB to Lab conversion,
+    torchmetrics for PSNR computation.
+    """
+
+    psnr_sum: Tensor
+    count: Tensor
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.add_state("psnr_sum", default=torch.tensor(0.0), dist_reduce_fx="sum")
+        self.add_state("count", default=torch.tensor(0), dist_reduce_fx="sum")
+
+    def update(self, preds: Tensor, target: Tensor) -> None:
+        pred_lab = rgb_to_lab(preds)
+        target_lab = rgb_to_lab(target)
+
+        pred_l = pred_lab[:, :1]
+        target_l = target_lab[:, :1]
+
+        self.psnr_sum += peak_signal_noise_ratio(pred_l, target_l, data_range=100.0)
+        self.count += 1
+
+    def compute(self) -> Tensor:
+        if self.count == 0:
+            return torch.tensor(float("nan"))
+        return self.psnr_sum / self.count
+
+
+class MeanPCC(Metric):
+    """Mean Pearson Correlation Coefficient between image pairs.
+
+    Operates on raw tensors (no denormalization needed).
+    """
+
+    pcc_sum: Tensor
+    count: Tensor
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.add_state("pcc_sum", default=torch.tensor(0.0), dist_reduce_fx="sum")
+        self.add_state("count", default=torch.tensor(0), dist_reduce_fx="sum")
+
+    def update(self, preds: Tensor, target: Tensor) -> None:
+        x = preds.flatten(1).float()
+        y = target.flatten(1).float()
+        mean_x = x.mean(dim=1, keepdim=True)
+        mean_y = y.mean(dim=1, keepdim=True)
+        dx, dy = x - mean_x, y - mean_y
+        num = (dx * dy).sum(dim=1)
+        den = dx.norm(dim=1) * dy.norm(dim=1)
+        valid = den > 0
+        self.pcc_sum += (num[valid] / den[valid]).sum()
+        self.count += valid.sum()
+
+    def compute(self) -> Tensor:
+        if self.count == 0:
+            return torch.tensor(float("nan"))
+        return self.pcc_sum / self.count

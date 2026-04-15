@@ -20,6 +20,17 @@ callbacks:
     monitor: validation/loss
     mode: min
 
+  # opt-in callbacks — add to trainer.callbacks when needed
+  tiles_export:
+    _target_: stain_normalization.callbacks.TilesExport
+    output_dir: ???
+    n_first: 10
+    sample_rate: 0.0005  # for test dataset cca 100 tiles
+
+  wsi_assembler:
+    _target_: stain_normalization.callbacks.WSIAssembler
+    output_dir: ???
+
   early_stopping:
     _target_: lightning.pytorch.callbacks.EarlyStopping
     monitor: validation/loss
@@ -32,6 +43,8 @@ model:
   lambda_l1: 0.2
   lambda_lum: 0.2
   lambda_gdl: 0.1
+  normalize_mean: ${data.test.normalize.mean}
+  normalize_std: ${data.test.normalize.std}
 
 trainer:
   enable_checkpointing: True
@@ -46,11 +59,12 @@ trainer:
 data:
   batch_size: 64
   num_workers: 8
-  
+
 metadata:
   user: ???
   experiment_name: Stain-Normalization
-  run_name: ???
+  run_name: ??? 
   description: ???
   hyperparams: ${model}
+
 

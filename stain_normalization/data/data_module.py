@@ -54,7 +54,7 @@ class DataModule(LightningDataModule):
             persistent_workers=self.num_workers > 0,
         )
 
-    def test_dataloader(self) -> Iterable[PredictBatch]:
+    def test_dataloader(self) -> DataLoader[PredictBatch]:
         return DataLoader(
             self.test,
             batch_size=self.batch_size,
@@ -62,10 +62,13 @@ class DataModule(LightningDataModule):
             collate_fn=collate_fn,
         )
 
-    def predict_dataloader(self) -> Iterable[PredictBatch]:
-        return DataLoader(
-            self.predict,
-            batch_size=self.batch_size,
-            num_workers=self.num_workers,
-            collate_fn=collate_fn,
-        )
+    def predict_dataloader(self) -> list[DataLoader[PredictBatch]]:
+        return [
+            DataLoader(
+                dataset,
+                batch_size=self.batch_size,
+                num_workers=self.num_workers,
+                collate_fn=collate_fn,
+            )
+            for dataset in self.predict.datasets
+        ]
