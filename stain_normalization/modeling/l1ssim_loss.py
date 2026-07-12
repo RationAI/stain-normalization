@@ -48,7 +48,7 @@ class L1SSIMLoss(nn.Module):
         ssim_loss = 1.0 - self._ssim(image, target_image, self.window)
 
         # Gradient loss for edges
-        gdl_loss = gradient_loss(image, target_image)
+        # gdl_loss = gradient_loss(image, target_image)
 
         # Luminance / brightness loss
         brig_loss = brightness_loss(image, target_image)
@@ -57,7 +57,7 @@ class L1SSIMLoss(nn.Module):
         total_loss = (
             self.lambda_l1 * l1_loss
             + self.lambda_dssim * ssim_loss
-            + self.lambda_gdl * gdl_loss
+            # + self.lambda_gdl * gdl_loss
             + self.lambda_lum * brig_loss
         )
 
