@@ -1,5 +1,6 @@
 from collections.abc import Iterable
 
+import numpy as np
 import pandas as pd
 from albumentations import Transform3D
 from albumentations.pytorch import ToTensorV2
@@ -16,6 +17,10 @@ class TestDataset(MetaTiledSlides[PredictSample]):
     coordinates, and raw uint8 copies of both original and modified images —
     needed for callbacks that export tiles or run analysis.
 
+    For a fraction ``artifact_prob`` of tiles a wrong-colored tile (``artifact``)
+    is used as BOTH input and target, to test whether the model keeps such non-H&E
+    colors untouched.
+
     Differences from TrainDataset: returns metadata dict alongside tensors;
     keeps raw image copies for export.
     Differences from PredictDataset: applies modify transform to simulate
@@ -27,9 +32,13 @@ class TestDataset(MetaTiledSlides[PredictSample]):
         uris: Iterable[str],
         modify: Transform3D,
         normalize: Transform3D | None = None,
+        artifact: Transform3D | None = None,
+        artifact_prob: float = 0.0,
     ) -> None:
         self.modify = modify
         self.normalize = normalize
+        self.artifact = artifact
+        self.artifact_prob = artifact_prob
         super().__init__(uris=uris)
 
     def generate_datasets(self) -> Iterable[Dataset[PredictSample]]:
@@ -39,6 +48,8 @@ class TestDataset(MetaTiledSlides[PredictSample]):
                 tiles=self.filter_tiles_by_slide(slide["id"]),
                 modify=self.modify,
                 normalize=self.normalize,
+                artifact=self.artifact,
+                artifact_prob=self.artifact_prob,
             )
             for _, slide in self.slides.iterrows()
         )
@@ -51,6 +62,8 @@ class _TestSlideTiles(Dataset[PredictSample]):
         tiles: pd.DataFrame,
         modify: Transform3D,
         normalize: Transform3D | None = None,
+        artifact: Transform3D | None = None,
+        artifact_prob: float = 0.0,
     ) -> None:
         super().__init__()
         self.slide_tiles = OpenSlideTilesDataset(
@@ -62,6 +75,8 @@ class _TestSlideTiles(Dataset[PredictSample]):
         )
         self.modify = modify
         self.normalize = normalize
+        self.artifact = artifact
+        self.artifact_prob = artifact_prob
         self.to_tensor = ToTensorV2()
 
     def __len__(self) -> int:
@@ -73,10 +88,17 @@ class _TestSlideTiles(Dataset[PredictSample]):
         x = self.slide_tiles.tiles.iloc[idx]["x"]
         y = self.slide_tiles.tiles.iloc[idx]["y"]
 
-        # Create "wrong" image to use as input. Outputs image in float 0-1
-        modified_image_raw = self.modify(image=original_image_255)["image"]
+        # Create image mimicking an artifact. Uses aboth as a gt and input to teach the model to leave such colors unchanged.
+        if self.artifact is not None and np.random.uniform() < self.artifact_prob:
+            artifact_image = self.artifact(image=original_image_255)["image"]
+            modified_image_raw = artifact_image
+            original_image = artifact_image.copy()
+        else:
+            # Create "wrong" image to use as input. Outputs image in float 0-1
+            modified_image_raw = self.modify(image=original_image_255)["image"]
+            original_image = original_image_255 / 255.0
+
         modified_image = modified_image_raw.copy()
-        original_image = original_image_255 / 255.0
 
         if self.normalize:
             original_image = self.normalize(image=original_image)["image"]
