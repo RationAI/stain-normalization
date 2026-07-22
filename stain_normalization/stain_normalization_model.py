@@ -98,7 +98,7 @@ class StainNormalizationModel(LightningModule):
     def test_step(self, batch: PredictBatch, batch_idx: int = 0) -> Outputs:
         inputs, data = batch
         outputs = self(inputs)
-        targets = stack([item["original_image_tensor"] for item in data]).to(
+        targets = stack([item["target_tensor"] for item in data]).to(
             outputs.device
         )
         denormed_outputs = self._denormalize(outputs)

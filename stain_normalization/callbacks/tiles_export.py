@@ -55,13 +55,25 @@ class TilesExport(Callback):
 
             self._tensor_to_image(outputs[b]).save(slide_dir / f"{xy}_predicted.png")
 
-            original_image = Image.fromarray(data[b]["original_image"].astype("uint8"))
-            original_image.save(slide_dir / f"{xy}_original.png")
+            # model target - either real data or real+artifact
+            target_image = Image.fromarray(
+                (data[b]["target_image"] * 255).astype("uint8")
+            )
+            target_image.save(slide_dir / f"{xy}_original.png")
 
             modified_image = Image.fromarray(
                 (data[b]["modified_image"] * 255).astype("uint8")
             )
             modified_image.save(slide_dir / f"{xy}_modified.png")
+
+            # real tile, present only when an artifact was applied
+            if data[b].get("original_image") is not None:
+                real_image = Image.fromarray(data[b]["original_image"].astype("uint8"))
+                real_image.save(slide_dir / f"{xy}_real.png")
+
+            if "mask" in data[b]:
+                mask_image = Image.fromarray((data[b]["mask"] * 255).astype("uint8"))
+                mask_image.save(slide_dir / f"{xy}_mask.png")
 
     def on_predict_batch_end(
         self,

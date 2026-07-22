@@ -7,6 +7,7 @@ from albumentations.pytorch import ToTensorV2
 from rationai.mlkit.data.datasets import MetaTiledSlides, OpenSlideTilesDataset
 from torch.utils.data import Dataset
 
+from stain_normalization.data.artifact import Artifact
 from stain_normalization.type_aliases import PredictSample
 
 
@@ -14,17 +15,13 @@ class TestDataset(MetaTiledSlides[PredictSample]):
     """Dataset for testing and analysis.
 
     Same as TrainDataset but also returns a metadata dict with slide_name, xy
-    coordinates, and raw uint8 copies of both original and modified images —
+    coordinates, the mask, and raw copies of the target and modified images —
     needed for callbacks that export tiles or run analysis.
-
-    For a fraction ``artifact_prob`` of tiles a wrong-colored tile (``artifact``)
-    is used as BOTH input and target, to test whether the model keeps such non-H&E
-    colors untouched.
 
     Differences from TrainDataset: returns metadata dict alongside tensors;
     keeps raw image copies for export.
-    Differences from PredictDataset: applies modify transform to simulate
-    degraded input; real slides are not pre-modified.
+    Differences from PredictDataset: applies modify transform; real slides are
+    not pre-modified.
     """
 
     def __init__(
@@ -32,13 +29,11 @@ class TestDataset(MetaTiledSlides[PredictSample]):
         uris: Iterable[str],
         modify: Transform3D,
         normalize: Transform3D | None = None,
-        artifact: Transform3D | None = None,
-        artifact_prob: float = 0.0,
+        artifact: Artifact | None = None,
     ) -> None:
         self.modify = modify
         self.normalize = normalize
         self.artifact = artifact
-        self.artifact_prob = artifact_prob
         super().__init__(uris=uris)
 
     def generate_datasets(self) -> Iterable[Dataset[PredictSample]]:
@@ -49,7 +44,6 @@ class TestDataset(MetaTiledSlides[PredictSample]):
                 modify=self.modify,
                 normalize=self.normalize,
                 artifact=self.artifact,
-                artifact_prob=self.artifact_prob,
             )
             for _, slide in self.slides.iterrows()
         )
@@ -62,8 +56,7 @@ class _TestSlideTiles(Dataset[PredictSample]):
         tiles: pd.DataFrame,
         modify: Transform3D,
         normalize: Transform3D | None = None,
-        artifact: Transform3D | None = None,
-        artifact_prob: float = 0.0,
+        artifact: Artifact | None = None,
     ) -> None:
         super().__init__()
         self.slide_tiles = OpenSlideTilesDataset(
@@ -76,7 +69,6 @@ class _TestSlideTiles(Dataset[PredictSample]):
         self.modify = modify
         self.normalize = normalize
         self.artifact = artifact
-        self.artifact_prob = artifact_prob
         self.to_tensor = ToTensorV2()
 
     def __len__(self) -> int:
@@ -88,31 +80,37 @@ class _TestSlideTiles(Dataset[PredictSample]):
         x = self.slide_tiles.tiles.iloc[idx]["x"]
         y = self.slide_tiles.tiles.iloc[idx]["y"]
 
-        # Create image mimicking an artifact. Uses aboth as a gt and input to teach the model to leave such colors unchanged.
-        if self.artifact is not None and np.random.uniform() < self.artifact_prob:
-            artifact_image = self.artifact(image=original_image_255)["image"]
-            modified_image_raw = artifact_image
-            original_image = artifact_image.copy()
+        # Create "wrong" image to use as input. Outputs image in float 0-1
+        modified_image = self.modify(image=original_image_255)["image"]
+        if self.artifact is not None:
+            modified_image, target, mask = self.artifact.apply(
+                original_image_255, modified_image
+            )
         else:
-            # Create "wrong" image to use as input. Outputs image in float 0-1
-            modified_image_raw = self.modify(image=original_image_255)["image"]
-            original_image = original_image_255 / 255.0
+            target = original_image_255 / 255.0
+            mask = np.zeros(original_image_255.shape[:2], dtype=bool)
 
-        modified_image = modified_image_raw.copy()
+        # copies for export, before normalize
+        target_image = target
+        modified_image_raw = modified_image
+        # real data in 255, if artifact wasnt applied it's the same as targget_imageso we skip it
+        original_image_raw = original_image_255 if mask.any() else None
 
         if self.normalize:
-            original_image = self.normalize(image=original_image)["image"]
+            target = self.normalize(image=target)["image"]
             modified_image = self.normalize(image=modified_image)["image"]
 
-        original_image = self.to_tensor(image=original_image)["image"]
+        target = self.to_tensor(image=target)["image"]
         modified_image = self.to_tensor(image=modified_image)["image"]
 
         return (
             modified_image,
             {
-                "original_image_tensor": original_image,
-                "original_image": original_image_255,
+                "target_tensor": target,
+                "target_image": target_image,
                 "modified_image": modified_image_raw,
+                "original_image": original_image_raw,
+                "mask": mask,
                 "slide_name": slide_name,
                 "xy": f"{x}_{y}",
             },

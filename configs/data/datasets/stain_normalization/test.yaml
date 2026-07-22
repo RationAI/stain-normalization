@@ -1,8 +1,7 @@
 defaults:
   - /data/modify@modify: test
-  - /data/modify@artifact: artifact
+  - /data/artifact@artifact: default
   - /data/normalize@normalize: default
 
 _target_: stain_normalization.data.datasets.TestDataset
 uris: ["mlflow-artifacts:/65/c47cd842fbf14bf399cd4aca43af3127/artifacts/MMCI TL Test 512"]
-artifact_prob: 0.2
